@@ -18,18 +18,23 @@ class TranslationRequest(BaseModel):
 def get_workers_status():
     """
     Returns the number and names of active workers.
+    NOTE: This requires worker_enable_remote_control=True in celery_app.py.
+    In 'Quota-Saver' mode, this is disabled to save Redis commands.
     """
-    from app.celery_app import celery_app
-    i = celery_app.control.inspect()
-    active = i.active()
+    try:
+        from app.celery_app import celery_app
+        i = celery_app.control.inspect(timeout=1.0)
+        active = i.active()
 
-    if active is None:
-        return {"count": 0, "workers": []}
+        if active is None:
+            return {"count": 0, "workers": [], "mode": "quota_saver_active?"}
 
-    return {
-        "count": len(active),
-        "workers": list(active.keys())
-    }
+        return {
+            "count": len(active),
+            "workers": list(active.keys())
+        }
+    except Exception:
+        return {"error": "Could not inspect workers. Remote control might be disabled."}
 
 @router.post("/")
 def create_task(request: TranslationRequest, db: Session = Depends(get_db)):
