@@ -13,18 +13,6 @@ class AudioProcessingService:
         Uses Demucs to separate vocals from background music.
         Returns paths to (vocals_path, bgm_path).
         """
-        print(f"Separating vocals for task {task_id}...")
-        # Note: In production, we'd use the demucs python library or CLI
-        # For the scaffold, we define the command structure
-        cmd = [
-            "demucs",
-            "--two-stems=vocals",
-            "-o", self.stems_dir,
-            video_path
-        ]
-
-        # In a real environment, we'd run: subprocess.run(cmd, check=True)
-        # For now, we mock the expected output paths
         # Demucs creates a folder based on model name (default: hdemucs_l)
         model_name = "hdemucs_l"
         track_name = Path(video_path).stem
@@ -32,6 +20,22 @@ class AudioProcessingService:
 
         vocals_path = os.path.join(base_output, "vocals.wav")
         bgm_path = os.path.join(base_output, "no_vocals.wav")
+
+        # Check if already processed
+        if os.path.exists(vocals_path) and os.path.exists(bgm_path):
+            return vocals_path, bgm_path
+
+        cmd = [
+            "demucs",
+            "--two-stems=vocals",
+            "-o", self.stems_dir,
+            video_path
+        ]
+
+        try:
+            subprocess.run(cmd, check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Demucs failed: {e.stderr.decode()}")
 
         return vocals_path, bgm_path
 

@@ -1,0 +1,20 @@
+warning: The `tool.uv.dev-dependencies` field (used in `pyproject.toml`) is deprecated and will be removed in a future release; use `dependency-groups.dev` instead
+Downloading tokenizers (3.2MiB)
+Downloading hf-xet (4.3MiB)
+Downloading numpy (15.9MiB)
+Downloading onnxruntime (17.3MiB)
+Downloading av (34.7MiB)
+Downloading faster-whisper (1.1MiB)
+Downloading ctranslate2 (37.2MiB)
+ Downloaded faster-whisper
+ Downloaded tokenizers
+ Downloaded hf-xet
+ Downloaded ctranslate2
+ Downloaded onnxruntime
+ Downloaded av
+ Downloaded numpy
+Installed 21 packages in 126ms
+INFO:     Started server process [219149]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)

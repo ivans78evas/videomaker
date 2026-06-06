@@ -40,7 +40,7 @@ Since Google Colab sessions expire, we use a worker script that connects to our 
 ### Steps
 1. **Master Node:** Once your OCI instance is ready, install Docker and run the Master container (Redis/FastAPI).
 2. **Colab Notebook:**
-   - Open the provided `infra/worker_colab.ipynb` in Google Colab.
+   - Open the provided `infra/colab_worker/worker_colab.ipynb` in Google Colab.
    - Set the `MASTER_IP` to your OCI server's public IP.
    - Enable **GPU Acceleration** (Edit -> Notebook Settings -> T4 GPU).
    - Run the cells to start the worker.

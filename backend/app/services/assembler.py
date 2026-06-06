@@ -25,8 +25,11 @@ class AssemblerService:
             output_path
         ]
 
-        print(f"Running FFmpeg merge for {output_path}...")
-        # In a real run: subprocess.run(cmd, check=True)
+        try:
+            subprocess.run(cmd, check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"FFmpeg merge failed: {e.stderr.decode()}")
+
         return output_path
 
 assembler_service = AssemblerService()

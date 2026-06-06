@@ -11,19 +11,24 @@ class TranscriptionService:
         """
         Uses Faster-Whisper to generate timestamped transcription.
         """
-        print(f"Transcribing audio for task {task_id}...")
-        # In a real environment, we'd load the WhisperModel:
-        # model = WhisperModel("large-v3", device="cuda", compute_type="float16")
-        # segments, _ = model.transcribe(audio_path, beam_size=5)
+        try:
+            from faster_whisper import WhisperModel
+        except ImportError:
+            raise RuntimeError("faster-whisper is not installed in this environment.")
 
-        # Mocking return structure
-        return [
-            {
-                "start": 0.0,
-                "end": 2.0,
-                "text": "Hello world, this is a sample transcription.",
-                "speaker": "SPEAKER_00"
-            }
-        ]
+        # In production, we'd use a shared model instance to avoid reloading
+        # For the implementation, we use GPU if available
+        model = WhisperModel("large-v3", device="auto", compute_type="int8")
+        segments, _ = model.transcribe(audio_path, beam_size=5)
+
+        results = []
+        for segment in segments:
+            results.append({
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text.strip(),
+            })
+
+        return results
 
 transcription_service = TranscriptionService()
