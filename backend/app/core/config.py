@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "app"
-    SQLALCHEMY_DATABASE_URI: str | None = None
 
     @property
     def database_url(self) -> str:
