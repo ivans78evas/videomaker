@@ -39,6 +39,8 @@ Since Google Colab sessions expire, we use a worker script that connects to our 
 
 ### Steps
 1. **Master Node:** Once your OCI instance is ready, install Docker and run the Master container (Redis/FastAPI).
+    - **Security Rule:** You **MUST** open port `6379` (Redis) and `8000` (API) in the Oracle Cloud VCN Security List (Ingress Rules) to allow the Colab worker to connect.
+    - **Redis Bind:** The provided `docker-compose.yml` is configured to bind Redis to `0.0.0.0` for external access.
 2. **Colab Notebook:**
    - Open the provided `infra/colab_worker/worker_colab.ipynb` in Google Colab.
    - Set the `MASTER_IP` to your OCI server's public IP.
