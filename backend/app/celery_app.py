@@ -27,11 +27,10 @@ celery_app.conf.update(
     task_ignore_result=True, # Saves state updates
 
     # Reduce polling frequency (Strictly under 100 RPM across a fleet)
+    # Minimalistic transport for Upstash: disable fanout patterns
     broker_transport_options={
         'visibility_timeout': 3600,
         'polling_interval': 60,  # Check for new tasks every 60s
-        'fanout_prefix': True,
-        'fanout_patterns': True,
     },
 
     # --- Extreme Quota Saving (Upstash Free Tier) ---
@@ -46,6 +45,9 @@ celery_app.conf.update(
     # Disable remote control (Saves commands used for inspect/control)
     # Note: This will disable the /workers API endpoint, but it's necessary to save quota.
     worker_enable_remote_control=False,
+
+    # Do not auto-create queues to prevent phantom suffixes
+    task_create_missing_queues=False,
 
     # --- Priority & Routing Configuration ---
     task_default_queue='default',
