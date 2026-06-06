@@ -17,14 +17,16 @@ class Settings(BaseSettings):
     # Redis & Celery
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
+    # Support full URL for Upstash/Managed Redis (e.g. rediss://...)
     CELERY_BROKER_URL: str | None = None
     CELERY_RESULT_BACKEND: str | None = None
 
     def model_post_init(self, __context):
+        # Use full URL if provided, otherwise construct from host/port
         if not self.CELERY_BROKER_URL:
             self.CELERY_BROKER_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
         if not self.CELERY_RESULT_BACKEND:
-            self.CELERY_RESULT_BACKEND = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+            self.CELERY_RESULT_BACKEND = self.CELERY_BROKER_URL
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 
