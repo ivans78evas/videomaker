@@ -35,7 +35,16 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
     logger.info(f"--- Starting Pipeline for Task {task_id} ---")
     start_time = time.time()
 
+    from app.models.models import TranslationTask
+
     try:
+        # Mark as processing
+        with SessionLocal() as db:
+            task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+            if task:
+                task.status = "processing"
+                db.commit()
+
         # 1. Ingestion
         logger.info(f"Step 1: Ingesting video from {url}")
         video_path = ingestion_service.download_video(url, task_id)
@@ -83,6 +92,11 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
 
         # Audit Trail: Log completion metrics
         with SessionLocal() as db:
+            task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+            if task:
+                task.status = "completed"
+                task.local_final_path = output_path
+
             log = TaskLog(
                 task_id=task_id,
                 event="completed",
@@ -95,8 +109,21 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
 
     except Exception as e:
         logger.error(f"Task {task_id} failed: {str(e)}")
-        # Placeholder for Telegram notification
-        # send_telegram_alert(f"Task {task_id} failed: {str(e)}")
+        # Poison Pill Handling: Mark as failed in DB
+        with SessionLocal() as db:
+            task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+            if task:
+                task.status = "failed"
+                db.commit()
+
+            log = TaskLog(
+                task_id=task_id,
+                event="failed",
+                metrics={"error": str(e)}
+            )
+            db.add(log)
+            db.commit()
+
         return {"status": "failed", "error": str(e)}
 
     finally:
