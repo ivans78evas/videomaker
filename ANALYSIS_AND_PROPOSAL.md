@@ -169,7 +169,9 @@ Translation is not just about words; it's about the "vibe."
 - **Cultural Adaptation:** The LLM prompt should not just "translate" but "localize." (e.g., changing references from "Walmart" to "Magnit/Pyaterochka" for Russian audiences).
 - **Vocal Emotion:** Standard TTS is often flat. Using Emotion-aware TTS or cloning with "high stability" settings is crucial for entertainment content.
 - **Audio Ducking & Synchronization:** Professional sound design involves lowering the BGM only when the voice is speaking and raising it during transitions.
-- **Timing Constraints:** In "Voice Cloning" mode, the translated speech must fit within the original speaker's interval. The LLM should be instructed to keep translations within +/- 10% of the original character count, and the TTS engine should use time-stretching if necessary to maintain synchronization.
+- **Timing & Natural Flow:** In "Voice Cloning" mode, the translated speech must fit within the original speaker's interval. To avoid the poor quality associated with time-stretching (speeding up or slowing down audio), the system must prioritize natural speech rhythms.
+    - **LLM Length Constraints:** The LLM is instructed to produce a translation that matches the target duration based on average speaking rates (e.g., "translate this to be spoken in exactly 5 seconds").
+    - **Intelligent Gapping:** Use small, natural pauses between sentences to align with the original video's timing, rather than distorting the voice itself.
 
 ### 5.3 Scalability Architecture
 - **Distributed Worker Pattern:** Don't process everything on one machine. Use a Master node for API and Task management, and multiple "GPU Workers" that pick up tasks from a Redis queue.
