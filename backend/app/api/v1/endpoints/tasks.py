@@ -13,6 +13,23 @@ class TranslationRequest(BaseModel):
     url: str
     target_lang: str
 
+@router.get("/workers")
+def get_workers_status():
+    """
+    Returns the number and names of active workers.
+    """
+    from app.celery_app import celery_app
+    i = celery_app.control.inspect()
+    active = i.active()
+
+    if active is None:
+        return {"count": 0, "workers": []}
+
+    return {
+        "count": len(active),
+        "workers": list(active.keys())
+    }
+
 @router.post("/")
 def create_task(request: TranslationRequest, db: Session = Depends(SessionLocal)):
     task_id = str(uuid.uuid4())

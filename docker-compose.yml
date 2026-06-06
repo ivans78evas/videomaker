@@ -47,6 +47,18 @@ services:
       - redis
       - db
 
+  dashboard:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+
 volumes:
   postgres_data:
   storage_data:
