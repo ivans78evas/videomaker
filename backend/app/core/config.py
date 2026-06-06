@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str | None = None
     CELERY_RESULT_BACKEND: str | None = None
 
+    # LLM Providers
+    GROQ_API_KEY: str = "stub"
+    OPENROUTER_API_KEY: str = "stub"
+
     def model_post_init(self, __context):
         # Use full URL if provided, otherwise construct from host/port
         if not self.CELERY_BROKER_URL:

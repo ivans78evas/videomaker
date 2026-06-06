@@ -8,6 +8,26 @@ class AudioProcessingService:
         self.stems_dir = stems_dir
         Path(stems_dir).mkdir(parents=True, exist_ok=True)
 
+    def extract_voice_sample(self, vocal_path: str, task_id: str, duration: int = 10) -> str:
+        """
+        Extracts a short sample (e.g., 10s) from the isolated vocals for Omni-Voice cloning.
+        """
+        sample_path = os.path.join(self.stems_dir, f"{task_id}_voice_sample.wav")
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", vocal_path,
+            "-t", str(duration),
+            "-acodec", "pcm_s16le",
+            "-ar", "16000",
+            "-ac", "1",
+            sample_path
+        ]
+        try:
+            subprocess.run(cmd, check=True, capture_output=True)
+            return sample_path
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"FFmpeg voice extraction failed: {e.stderr.decode()}")
+
     def separate_vocals(self, video_path: str, task_id: str) -> Tuple[str, str]:
         """
         Uses Demucs to separate vocals from background music.

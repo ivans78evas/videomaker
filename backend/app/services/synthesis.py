@@ -13,16 +13,20 @@ class SynthesisService:
         communicate = edge_tts.Communicate(text, voice)
         await communicate.save(output_path)
 
-    def synthesize_segments(self, segments: List[Dict[str, Any]], task_id: str, lang: str = "ru") -> List[str]:
+    def synthesize_segments(self, segments: List[Dict[str, Any]], task_id: str, lang: str = "ru", voice_id: str = None) -> List[str]:
         """
         Synthesizes translated audio for each segment separately to maintain timing.
+        Supports dynamic voice_id from Omni-Voice profiling.
         """
-        voice_map = {
+        # Default narrator mapping
+        default_voice_map = {
             "ru": "ru-RU-SvetlanaNeural",
             "en": "en-US-GuyNeural",
             "es": "es-ES-AlvaroNeural"
         }
-        voice = voice_map.get(lang, "en-US-GuyNeural")
+
+        # Use cloned voice if provided, otherwise fallback to narrator
+        voice = voice_id if voice_id else default_voice_map.get(lang, "en-US-GuyNeural")
 
         audio_paths = []
         for i, segment in enumerate(segments):

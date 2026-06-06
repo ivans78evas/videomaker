@@ -6,6 +6,9 @@ from app.services.translation import translation_service
 from app.services.synthesis import synthesis_service
 from app.services.assembler import assembler_service
 from app.services.moderation import moderation_service
+from app.services.text_cleaner import text_cleaner
+from app.services.qa import consensus_qa_service
+from app.services.voice_registry import voice_registry
 from app.models.models import TaskLog
 from app.db.session import SessionLocal
 from loguru import logger
@@ -53,11 +56,20 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
         logger.info(f"Step 2: Separating vocals...")
         vocals_path, bgm_path = audio_processing_service.separate_vocals(video_path, task_id)
 
+        # 2.1 Omni-Voice Profiling
+        logger.info(f"Step 2.1: Capturing Omni-Voice profile...")
+        voice_sample = audio_processing_service.extract_voice_sample(vocals_path, task_id)
+        voice_id = voice_registry.capture_omni_voice("default_channel", voice_sample)
+
         # 3. Diarization & Transcription
         logger.info(f"Step 3: Speaker Diarization & Transcription...")
         # intervals = audio_processing_service.diarize(vocals_path, task_id)
         # main_speaker = audio_processing_service.get_main_speaker(intervals)
         transcript = transcription_service.transcribe(vocals_path, task_id)
+
+        # 3.0 Text Sanitization (Cleaning)
+        logger.info(f"Step 3.0: Sanitizing text...")
+        transcript = text_cleaner.clean_segments(transcript)
 
         # 3.1 Content Moderation
         logger.info(f"Step 3.1: Content Moderation...")
@@ -78,10 +90,24 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
                 task.transcript_json = {"segments": translated_segments}
                 db.commit()
 
-        # 5. Synthesis (Aggregated & Hybrid Logic)
-        logger.info(f"Step 5: Synthesizing new audio segments (Hybrid Mode)...")
-        # In a real run, we'd iterate and call specific TTS providers per speaker
-        synthesis_service.synthesize_segments(translated_segments, task_id, lang=target_lang)
+        # 4.2 Quality Assurance (Multi-Agent Consensus via Groq/OpenRouter)
+        logger.info(f"Step 4.2: Running Multi-Agent Consensus QA...")
+        qa_result = consensus_qa_service.run_multi_agent_qa(translated_segments, target_lang=target_lang)
+
+        with SessionLocal() as db:
+            task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+            if task:
+                task.source_metadata = {**(task.source_metadata or {}), "qa": qa_result}
+                if qa_result["decision"]["status"] != "approved":
+                    task.status = "review_required"
+                    db.commit()
+                    logger.warning(f"Task {task_id} failed Consensus QA. Status: review_required.")
+                db.commit()
+
+        # 5. Synthesis (Aggregated & Voice Mapping)
+        logger.info(f"Step 5: Synthesizing new audio segments (Hybrid & Cloned)...")
+        # Synthesis service now uses the dynamic Omni-Voice ID
+        synthesis_service.synthesize_segments(translated_segments, task_id, lang=target_lang, voice_id=voice_id)
 
         # 6. Final Merge (Assemble segments based on timestamps)
         logger.info(f"Step 6: Final FFmpeg Assembly...")
