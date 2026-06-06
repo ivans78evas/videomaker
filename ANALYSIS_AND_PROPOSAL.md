@@ -59,9 +59,12 @@ To meet the requirements of a **Mass Translation Firm**, we will extend MPT into
     - *Context-aware translation:* Provide the LLM with the video title/description for better accuracy.
 5.  **Review Portal (New Web Module):**
     - A simple Streamlit/React interface where a human editor can adjust the translated text.
-6.  **Voice Generation (Dubbing Modes):**
-    - **Mode A: Narrator Overlay:** The original audio is lowered (ducked), and a clear professional narrator voice is played over it. Ideal for educational or news content.
-    - **Mode B: Voice Cloning:** Use **ElevenLabs** to clone the original speaker's voice. The new audio replaces the original vocal track entirely, maintaining the "persona" of the creator.
+6.  **Voice Generation (Hybrid Dubbing Modes):**
+    - **Mode A: Narrator Overlay:** The original audio is lowered (ducked), and a professional narrator voice is played over it.
+    - **Mode B: Voice Cloning:** Use **ElevenLabs** to clone the original speaker's voice.
+    - **Mode C: Intelligent Hybrid (Main Speaker + Inserts):**
+        - **Main Speaker:** Automatically identified via diarization. Translated using high-fidelity **Voice Cloning** to maintain the channel's brand identity.
+        - **Inserts/B-Roll:** Interviews, guest clips, or random video inserts are translated using **Narrator Overlay** (voice-over style). This provides a clear distinction between the "host" and "guest" content, enhancing viewer clarity.
 7.  **Final Remixing:**
     - Merge `translated_vocal.wav` + `background_music.wav` (ducking logic: lower music when voice is active).
     - Hardcode subtitles (if needed).
@@ -195,6 +198,48 @@ Translation is not just about words; it's about the "vibe."
 
 ---
 
+## 7. Competitor API Analysis & Strategic Application
+
+To build a professional service, our API architecture should adopt the best practices from leaders like HeyGen and Rask.ai.
+
+### 7.1 Common API Patterns in the Industry
+Competitors typically provide a **RESTful Asynchronous API** with the following flow:
+
+1.  **Ingestion:** `POST /v1/video/translate`
+    - Accepts a URL or a Multipart file upload.
+    - Returns a `task_id` immediately.
+2.  **Polling/Status:** `GET /v1/tasks/{task_id}`
+    - Returns the current state (Ingesting, Separating, Translating, Review_Required, Dubbing, Completed).
+3.  **Webhook Callbacks:** `POST {user_callback_url}`
+    - Notifies the caller when a long-running process (like rendering) is done.
+
+### 7.2 Key Endpoints to Implement in "TranslationTurbo"
+Based on competitor analysis, we should implement a **Modular API** to allow both "One-Click" and "Fine-Tuned" workflows:
+
+- **Pipeline Control:**
+    - `POST /v1/tasks/create`: Start a new translation job.
+        - **Params:** `source_url`, `target_lang`, `dubbing_mode` (Narrator/Clone/Hybrid), `watermark_removal` (bool), `output_resolution`.
+    - `GET /v1/tasks/{task_id}/preview`: Get a low-resolution proxy for the Reviewer Portal.
+- **Human-in-the-Loop Support:**
+    - `GET /v1/tasks/{task_id}/transcript`: Retrieve the draft translation in JSON format with word-level timestamps.
+    - `PATCH /v1/tasks/{task_id}/transcript`: Update the script after human review. The system should automatically re-generate audio for modified segments only (Incremental Synthesis).
+- **Asset Management:**
+    - `GET /v1/assets/voices`: List available cloned and stock voices, including gender, age, and "use-case" tags (e.g., News, Storytelling).
+    - `POST /v1/assets/voices/clone`: Create a new voice clone from a 30s sample. Returns a `voice_id` for use in `tasks/create`.
+
+### 7.3 Advanced Scenario Logic: The "Hybrid Dubbing" Strategy
+Our firm will implement a unique scenario that maximizes quality while minimizing complexity:
+
+- **The "Hero" Logic:**
+    - The API will detect the "Main Speaker" (highest speech duration).
+    - **Endpoint Parameter:** `dubbing_strategy: "hybrid_brand_voice"`.
+    - **Execution:**
+        - **Main Speaker:** Automatically identified and dubbed with a **high-quality Voice Clone**.
+        - **Secondary Speakers/Inserts:** Diarized and dubbed with a **standard Narrator voice-over**.
+    - **Benefit:** This saves on ElevenLabs/cloning credits while keeping the "Soul" of the channel (the main creator's voice) intact.
+
+---
+
 ## 6. Open Source Benchmarks & Technology Trends
 
 A detailed look at leading open-source projects on GitHub reveals the "Gold Standard" for self-hosted video translation.
@@ -204,6 +249,8 @@ A detailed look at leading open-source projects on GitHub reveals the "Gold Stan
 | **[video-translator](https://github.com/overcrash66/video-translator)** | HDemucs, Faster-Whisper, NeMo Diarization, VoiceFixer | **Vocal Restoration:** Uses spectral matching to make TTS sound like the original. | Adopt their **EQ Spectral Matching** logic for premium clones. |
 | **[open-whisperer](https://github.com/othneildrew/open-whisperer)** | ffmpeg-python, argostranslate | **Monorepo Architecture:** Clean split between Next.js UI and Python backend. | Reuse their **Docker/Monorepo** structure for our Master-Worker setup. |
 | **[viva-translate](https://github.com/ai-learning-tools/viva-translate)** | Gladia, DeepL, Chrome Extensions | **Real-time Subtitles:** Focus on browser-based audio capture. | Potential for an **Internal Browser Tool** to capture "Non-Downloadable" partner content. |
+| **[pyVideoTrans](https://github.com/jianchang512/pyvideotrans)** | Whisper, GUI (Tkinter), various TTS/Translation engines | **Batch Processing:** Highly mature tool for massive local video translation. | Excellent reference for **Batch Workflow** and local engine integration. |
+| **[Video-Dubbing-Translator](https://github.com/kadirb4rut/video-dubbing-translator)** | Coqui XTTS, WhisperX, LatentSync | **Local XTTS:** Uses XTTS for high-quality local voice cloning without cloud APIs. | Reference for our **Local-Only** mode to save on ElevenLabs costs. |
 | **[VideoDubber](https://github.com/pypa/sampleproject)** (conceptual) | MoviePy, pydub, TTS | **Simple Pipeline:** High focus on ease of use. | Benchmark for our **"Fast Tier"** low-complexity tasks. |
 
 ### 6.1 Emerging Technology Stack Trends
