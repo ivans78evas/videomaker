@@ -42,3 +42,12 @@ class TranslationTask(Base):
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class TaskLog(Base):
+    __tablename__ = "task_log"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("translation_task.id"))
+    event: Mapped[str] = mapped_column(String(255)) # started, completed, failed
+    metrics: Mapped[dict] = mapped_column(JSON, nullable=True) # {gpu_time: 120, cost: 0.05}
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)

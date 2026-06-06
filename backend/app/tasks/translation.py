@@ -6,9 +6,12 @@ from app.services.translation import translation_service
 from app.services.synthesis import synthesis_service
 from app.services.assembler import assembler_service
 from app.services.moderation import moderation_service
+from app.models.models import TaskLog
+from app.db.session import SessionLocal
 from loguru import logger
 import os
 import shutil
+import time
 
 @celery_app.task(name="tasks.process_translation")
 def process_translation(task_id: str, url: str, target_lang: str):
@@ -30,6 +33,7 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
     Main pipeline for Video-to-Video translation.
     """
     logger.info(f"--- Starting Pipeline for Task {task_id} ---")
+    start_time = time.time()
 
     try:
         # 1. Ingestion
@@ -76,6 +80,17 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
         #     return {"status": "review_required", "reason": "sync_drift"}
 
         logger.success(f"--- Task {task_id} Pipeline Completed ---")
+
+        # Audit Trail: Log completion metrics
+        with SessionLocal() as db:
+            log = TaskLog(
+                task_id=task_id,
+                event="completed",
+                metrics={"duration_sec": time.time() - start_time}
+            )
+            db.add(log)
+            db.commit()
+
         return {"status": "completed", "task_id": task_id, "output": output_path}
 
     except Exception as e:
