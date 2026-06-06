@@ -69,6 +69,16 @@ Goal: Superior localization that beats competitors.
   - Task: Automatically flag "AI-Altered Content" in YouTube metadata.
   - Technology: Metadata logic in `Publisher Module`.
 
+## Phase 5: Infrastructure Acquisition (Zero-Capex Hunting)
+Goal: Automate the securing of "Always Free" resources despite capacity shortages.
+
+- [ ] **[OCI Capacity Hunter]**
+  - Task: Implement automated script to bypass "Out of host capacity" by polling the OCI API.
+  - Technology: `hitrov/oci-arm-host-capacity` or custom Python/OCI-CLI wrapper.
+- [ ] **[Colab Headless Worker]**
+  - Task: Script to run long-running workers on Google Colab with auto-reconnect.
+  - Technology: `google-colab` API, `Selenium` (if needed for session keeping).
+
 ## Infrastructure Checklist
 - [ ] **Master Setup:** Oracle Cloud Always Free (Ampere A1).
 - [ ] **Worker Setup:** Google Colab / Kaggle "Headless" Worker script.

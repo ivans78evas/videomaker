@@ -274,7 +274,9 @@ To satisfy the **Zero-Cost** requirement, the system can be deployed without pur
 
 ### 8.3 The "Pure Zero" Implementation Path (No Hardware, No API Fees)
 
-1.  **Orchestration:** Run the **Master Node** on **Oracle Cloud Free Tier** (Always Free ARM Ampere A1 instances with 24GB RAM).
+1.  **Orchestration (The Capacity Challenge):** Run the **Master Node** on **Oracle Cloud Free Tier** (Always Free ARM Ampere A1 instances with 24GB RAM).
+    - **Note:** Since A1 instances are often "Out of Capacity," we use an **Automated Instance Provisioner**.
+    - **Mechanism:** A script (e.g., based on `hitrov/oci-arm-host-capacity`) that runs locally or via GitHub Actions. It polls the OCI `LaunchInstance` API every 60 seconds. As soon as a slot is freed in your region, the script registers it for you.
 2.  **Worker (Processing):** Use **Google Colab** with a custom "headless" worker script that connects to the Master's Redis queue. This provides a **Free Tesla T4 GPU**.
 3.  **Storage:** Use the 20GB free storage in Oracle Cloud or a free tier of **Cloudflare R2** (up to 10GB).
 4.  **AI Models:**
