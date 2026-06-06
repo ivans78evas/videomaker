@@ -249,6 +249,35 @@ Our firm will implement a unique scenario that maximizes quality while minimizin
 
 ---
 
+## 8. Computational Strategy & Hardware Requirements
+
+Scaling a mass translation firm requires a rigorous approach to infrastructure to prevent bottlenecks and manage electricity/cooling costs.
+
+### 8.1 Computational Solvers (Efficiency Strategies)
+- **Model Quantization:** Use `int8` or `float16` quantization for **Faster-Whisper** and **Demucs**. This reduces VRAM usage by 50-75% with negligible loss in accuracy.
+- **GPU Acceleration (CUDA/TensorRT):** All heavy lifting (Separation, Diarization, STT) must run on NVIDIA GPUs via CUDA. Final FFmpeg rendering should use `h264_nvenc` for hardware-accelerated encoding.
+- **Concurrent Execution Pipeline:**
+    - Workers do not process one video at a time linearly.
+    - **Step-Parallelism:** While the GPU is busy with `Demucs` on Video A, the CPU can be busy with `yt-dlp` ingestion on Video B.
+- **Task Batching:** Group short videos (Shorts/TikToks) into batches to keep the GPU utilization at 100%.
+
+### 8.2 Hardware Requirements (Per Worker Node)
+
+| Component | Minimum (Fast Tier) | Recommended (Enterprise) | Rationale |
+| :--- | :--- | :--- | :--- |
+| **GPU** | NVIDIA RTX 3060 (12GB) | **NVIDIA RTX 4090 (24GB)** | VRAM is the primary bottleneck for Demucs and Whisper Large-v3. |
+| **CPU** | 8 Cores (AMD/Intel) | 16+ Cores (Ryzen 9 / Threadripper) | FFmpeg and Python orchestration require high clock speeds. |
+| **RAM** | 32 GB | 64+ GB | Loading multiple models and high-res video buffers into memory. |
+| **Storage** | 1TB NVMe SSD | 4TB+ NVMe (RAID 0/1) | Fast I/O is critical for temporary video stems and cache. |
+| **Network** | 100 Mbps | 1 Gbps+ Dedicated | Rapid ingestion of 4K source files and high-res uploads. |
+
+### 8.3 Infrastructure Scaling Logic
+- **Master Node:** Can be a standard cloud VPS (AWS EC2 t3.large). It only handles DB (PostgreSQL) and the Task Queue (Redis).
+- **Worker Nodes:** Ideally "Bare Metal" servers located in low-cost electricity regions or specialized GPU clouds (e.g., Lambda Labs, Vast.ai).
+- **Hybrid Auto-scaling:** Scale up "Spot" GPU instances during peak outreach periods and scale down to base local hardware during quiet hours.
+
+---
+
 ## 6. Open Source Benchmarks & Technology Trends
 
 A detailed look at leading open-source projects on GitHub reveals the "Gold Standard" for self-hosted video translation.
