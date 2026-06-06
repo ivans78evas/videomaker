@@ -37,16 +37,19 @@ To meet the requirements of a **Mass Translation Firm**, we will extend MPT into
 
 ### 3.1 The "Full Cycle" Pipeline
 1.  **Ingestion:** YouTube Link -> `yt-dlp` -> High Quality MP4/MKV.
-2.  **Audio Processing (New):**
-    - Use **Demucs** or **Spleeter** to separate the audio into `vocal.wav` and `background_music.wav`.
-3.  **Transcription:** `vocal.wav` -> **Faster-Whisper** -> Timestamped Transcript (JSON/SRT).
+2.  **Audio Processing & Diarization (New):**
+    - Use **Demucs** to separate `vocal.wav` and `background_music.wav`.
+    - **Interval Validation:** Apply **Pyannote.audio** for Speaker Diarization to identify exactly *when* each speaker is talking.
+    - **Active Speaker Detection (Optional):** Use Computer Vision to detect lips movement for validating intervals in complex scenes.
+3.  **Transcription:** `vocal.wav` -> **Faster-Whisper** -> Timestamped Transcript (JSON/SRT) aligned with validated speaker intervals.
 4.  **Translation:** Transcript -> **LLM (Groq / Gemini 1.5 Flash)** -> Translated Script.
     - *High-Speed/Free Tier:* **Groq (Llama 3)** provides near-instant translation at zero or very low cost. **Google Gemini 1.5 Flash** (via AI Studio) offers a generous free tier for context-aware localization.
     - *Context-aware translation:* Provide the LLM with the video title/description for better accuracy.
 5.  **Review Portal (New Web Module):**
     - A simple Streamlit/React interface where a human editor can adjust the translated text.
-6.  **Voice Generation:** Translated Script -> **TTS (ElevenLabs/Azure)** -> `translated_vocal.wav`.
-    - *Voice Cloning:* Use ElevenLabs for high-fidelity cloning of the original speaker.
+6.  **Voice Generation (Dubbing Modes):**
+    - **Mode A: Narrator Overlay:** The original audio is lowered (ducked), and a clear professional narrator voice is played over it. Ideal for educational or news content.
+    - **Mode B: Voice Cloning:** Use **ElevenLabs** to clone the original speaker's voice. The new audio replaces the original vocal track entirely, maintaining the "persona" of the creator.
 7.  **Final Remixing:**
     - Merge `translated_vocal.wav` + `background_music.wav` (ducking logic: lower music when voice is active).
     - Hardcode subtitles (if needed).
@@ -119,6 +122,7 @@ For a "Firm" level of quality, automation is rarely 100% perfect.
 
 1.  **VocalSeparationService:**
     - Wrapper for `demucs`. Input: MP4. Output: `vocals.wav`, `no_vocals.wav`.
+    - **IntervalValidator:** Integrated module using Pyannote to ensure voice-over fits perfectly into the speaker's original time slots.
 2.  **AdvancedTranslator:**
     - Uses GPT-4o, **Groq (Llama 3)**, or **Gemini 1.5 Flash**.
     - System prompt focusing on "YouTube Style Localization".
@@ -164,7 +168,8 @@ Running a mass translation firm involves heavy compute costs.
 Translation is not just about words; it's about the "vibe."
 - **Cultural Adaptation:** The LLM prompt should not just "translate" but "localize." (e.g., changing references from "Walmart" to "Magnit/Pyaterochka" for Russian audiences).
 - **Vocal Emotion:** Standard TTS is often flat. Using Emotion-aware TTS or cloning with "high stability" settings is crucial for entertainment content.
-- **Audio Ducking:** Professional sound design involves lowering the BGM only when the voice is speaking and raising it during transitions.
+- **Audio Ducking & Synchronization:** Professional sound design involves lowering the BGM only when the voice is speaking and raising it during transitions.
+- **Timing Constraints:** In "Voice Cloning" mode, the translated speech must fit within the original speaker's interval. The LLM should be instructed to keep translations within +/- 10% of the original character count, and the TTS engine should use time-stretching if necessary to maintain synchronization.
 
 ### 5.3 Scalability Architecture
 - **Distributed Worker Pattern:** Don't process everything on one machine. Use a Master node for API and Task management, and multiple "GPU Workers" that pick up tasks from a Redis queue.
