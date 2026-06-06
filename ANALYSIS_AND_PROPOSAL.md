@@ -323,6 +323,13 @@ For ephemeral workers like Google Colab, knowing the "Fleet Size" is critical:
 - **Managed Mode (Upstash Optimized):** Disable default Celery gossip. Instead, the Master node relies on the **Redis Key Check** (Heartbeat).
 - **Headless Monitoring:** Use **Flower** in "Silent Mode" (events disabled) for visual tracking without exhausting the 500k monthly command quota.
 
+### 11.4 Verification: Real-World Quota Impact
+Based on production logs, an idle worker now consumes:
+- **`BRPOP` (Long Polling):** 1 command every 60s (~43k/month).
+- **`unacked_index` Maintenance:** 1 command every ~100s (~26k/month).
+- **Total Overhead:** ~69k commands/month per worker.
+- **Efficiency:** This allows **7 concurrent workers** to run 24/7 on a single free Upstash database, leaving headroom for real task execution.
+
 ---
 
 ## 9. Identified Gaps & Future Roadmap (The "Missing Layer")
