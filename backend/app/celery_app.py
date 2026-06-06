@@ -64,6 +64,10 @@ celery_app.conf.update(
             'exchange': 'bulk_tasks',
             'routing_key': 'bulk_tasks',
         },
+        'gpu_tasks': {
+            'exchange': 'gpu_tasks',
+            'routing_key': 'gpu_tasks',
+        },
     },
     task_routes={
         'tasks.process_translation_urgent': {'queue': 'urgent_tasks'},
