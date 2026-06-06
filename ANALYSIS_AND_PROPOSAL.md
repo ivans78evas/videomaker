@@ -359,7 +359,25 @@ Based on production logs, an idle worker now consumes:
 
 ---
 
-## 13. Frontend Strategy: The Operator Dashboard
+## 14. Business Model: The 50/50 Partnership Mechanism
+
+To scale without high upfront costs, the firm operates on a **Localization Partnership** model.
+
+### 14.1 The Deal Flow
+1. **Creator Outreach:** Use automated tools to find successful creators without a presence in specific regions (e.g., Spanish, Hindi, Russian).
+2. **Partnership Agreement:** The creator signs a 50/50 Net Profit split deal and whitelists our channel in their Content ID.
+3. **Automated Production:** Our "Zero-Capex" fleet processes their library.
+4. **Revenue Distribution:** AdSense revenue is tracked. Direct costs (API/GPU) are deducted, and the remaining profit is split 50/50.
+
+### 14.2 Financial Transparency
+A dedicated **Finance Module** in the dashboard provides:
+- **Cost Auditing:** Exact calculation of per-video processing costs.
+- **Profit Projections:** Real-time visibility for partners to build trust.
+- **Payout Management:** Automated report generation for monthly settlements.
+
+---
+
+## 15. Frontend Strategy: The Operator Dashboard
 
 To manage the autonomous GPU fleet, we implement a Next.js-based "Operator Dashboard".
 

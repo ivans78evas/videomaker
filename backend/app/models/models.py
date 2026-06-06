@@ -54,3 +54,24 @@ class TaskLog(Base):
     event: Mapped[str] = mapped_column(String(255)) # started, completed, failed
     metrics: Mapped[dict] = mapped_column(JSON, nullable=True) # {gpu_time: 120, cost: 0.05}
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+class PartnershipAgreement(Base):
+    __tablename__ = "partnership_agreement"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    channel_id: Mapped[str] = mapped_column(ForeignKey("youtube_channel.id"))
+    share_percentage: Mapped[float] = mapped_column(default=50.0) # E.g., 50.0 for 50/50
+    status: Mapped[str] = mapped_column(String(50), default="active") # active, terminated
+    terms_signed_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+class RevenueReport(Base):
+    __tablename__ = "revenue_report"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    channel_id: Mapped[str] = mapped_column(ForeignKey("youtube_channel.id"))
+    month: Mapped[str] = mapped_column(String(7)) # YYYY-MM
+    gross_revenue: Mapped[float] = mapped_column(default=0.0)
+    processing_costs: Mapped[float] = mapped_column(default=0.0)
+    net_profit: Mapped[float] = mapped_column(default=0.0)
+    partner_payout: Mapped[float] = mapped_column(default=0.0)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
