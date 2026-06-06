@@ -192,9 +192,12 @@ Translation is not just about words; it's about the "vibe."
 - **Distributed Worker Pattern:** Don't process everything on one machine. Use a Master node for API and Task management, and multiple "GPU Workers" that pick up tasks from a Redis queue.
 - **Storage Strategy:** Use S3-compatible storage (like MinIO) for intermediate files (vocals, music, translated clips) to allow multiple workers to access them.
 
-### 5.4 Risk Management
-- **YouTube Policy:** Automated uploads can be flagged as "Spam" if not managed correctly. Using the Official YouTube API with proper OAuth flows and avoiding "bot-like" behavior (e.g., posting 100 videos in 1 minute) is essential.
-- **Copyright:** Always check if the original video has "Creative Commons" or if you have an explicit contract with the owner. The interaction module should store these contracts.
+### 5.4 Risk Management & Quality Safeguards
+- **YouTube Policy:** Automated uploads can be flagged as "Spam" if not managed correctly. Use Official YouTube API with proper OAuth flows and avoid "bot-like" behavior.
+- **Hallucination Checker:** Implement an automated validation step that compares the duration of the original audio segment with the generated TTS segment. If the discrepancy exceeds 15%, the task is flagged for manual review before rendering to prevent "AI-invented" content or timing drift.
+- **Legal & Copyright:**
+    - Always check for "Creative Commons" or partner contracts.
+    - **Voice ID Rights:** Include standardized digital voice clone templates in the Partner Portal to ensure legal permission for localizing the creator's persona.
 
 ---
 
