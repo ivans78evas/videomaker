@@ -213,8 +213,14 @@ Competitors typically provide a **RESTful Asynchronous API** with the following 
 3.  **Webhook Callbacks:** `POST {user_callback_url}`
     - Notifies the caller when a long-running process (like rendering) is done.
 
-### 7.2 Key Endpoints to Implement in "TranslationTurbo"
-Based on competitor analysis, we should implement a **Modular API** to allow both "One-Click" and "Fine-Tuned" workflows:
+### 7.2 Core Inherited API (from MPT)
+The foundation already provides robust endpoints for task management:
+- `POST /v1/videos`: Base generation endpoint.
+- `GET /v1/tasks/{task_id}`: Polling for progress (inherited from `task_manager`).
+- `GET /v1/stream/` & `/download/`: Direct access to generated media.
+
+### 7.3 New Extension API for the Firm
+Based on competitor analysis (HeyGen, Rask.ai), we will extend the API to allow both "One-Click" and "Fine-Tuned" professional workflows:
 
 - **Pipeline Control:**
     - `POST /v1/tasks/create`: Start a new translation job.
@@ -227,7 +233,7 @@ Based on competitor analysis, we should implement a **Modular API** to allow bot
     - `GET /v1/assets/voices`: List available cloned and stock voices, including gender, age, and "use-case" tags (e.g., News, Storytelling).
     - `POST /v1/assets/voices/clone`: Create a new voice clone from a 30s sample. Returns a `voice_id` for use in `tasks/create`.
 
-### 7.3 Advanced Scenario Logic: The "Hybrid Dubbing" Strategy
+### 7.4 Advanced Scenario Logic: The "Hybrid Dubbing" Strategy
 Our firm will implement a unique scenario that maximizes quality while minimizing complexity:
 
 - **The "Hero" Logic:**
