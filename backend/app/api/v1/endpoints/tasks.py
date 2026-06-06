@@ -28,8 +28,8 @@ def create_task(request: TranslationRequest, db: Session = Depends(SessionLocal)
     # For now, we stub a default channel if none exists
     new_task.channel_id = "default_channel"
 
-    # db.add(new_task)
-    # db.commit()
+    db.add(new_task)
+    db.commit()
 
     # Send to Celery
     process_translation.delay(task_id, request.url, request.target_lang)

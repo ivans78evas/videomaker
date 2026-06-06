@@ -41,11 +41,31 @@ class AudioProcessingService:
 
     def diarize(self, audio_path: str, task_id: str):
         """
-        Uses Pyannote.audio to identify speaker intervals.
+        Uses Pyannote.audio or Whisper metadata to identify speakers.
         """
-        print(f"Diarizing audio for task {task_id}...")
-        # Logic for Pyannote integration would go here
-        # Return segments list: [{"start": 0.0, "end": 5.0, "speaker": "SPEAKER_00"}, ...]
-        return []
+        # Logic for Pyannote integration
+        # In a real environment:
+        # from pyannote.audio import Pipeline
+        # pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
+        # diarization = pipeline(audio_path)
+
+        # Mocking for the blueprint
+        return [
+            {"start": 0.0, "end": 10.0, "speaker": "MAIN_SPEAKER"},
+            {"start": 10.0, "end": 15.0, "speaker": "GUEST_SPEAKER"}
+        ]
+
+    def get_main_speaker(self, intervals: list) -> str:
+        """
+        Identifies the main speaker by total duration.
+        """
+        stats = {}
+        for interval in intervals:
+            spk = interval["speaker"]
+            duration = interval["end"] - interval["start"]
+            stats[spk] = stats.get(spk, 0) + duration
+
+        if not stats: return None
+        return max(stats, key=stats.get)
 
 audio_processing_service = AudioProcessingService()

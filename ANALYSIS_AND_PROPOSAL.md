@@ -195,6 +195,7 @@ Translation is not just about words; it's about the "vibe."
 ### 5.4 Risk Management & Quality Safeguards
 - **YouTube Policy:** Automated uploads can be flagged as "Spam" if not managed correctly. Use Official YouTube API with proper OAuth flows and avoid "bot-like" behavior.
 - **Hallucination Checker:** Implement an automated validation step that compares the duration of the original audio segment with the generated TTS segment. If the discrepancy exceeds 15%, the task is flagged for manual review before rendering to prevent "AI-invented" content or timing drift.
+- **Session Resiliency (Colab):** Since free GPU sessions can expire, the system uses a **Persistence Layer**. Intermediate files are saved to **Google Drive** or **Cloudflare R2** after every step. If a worker disconnects, the task is re-queued, and the new worker resumes from the last completed checkpoint (e.g., skips separation if already done).
 - **Legal & Copyright:**
     - Always check for "Creative Commons" or partner contracts.
     - **Voice ID Rights:** Include standardized digital voice clone templates in the Partner Portal to ensure legal permission for localizing the creator's persona.
