@@ -32,6 +32,9 @@ class TranslationTask(Base):
     target_language: Mapped[str] = mapped_column(String(50))
     status: Mapped[str] = mapped_column(String(50), default="pending") # pending, processing, review_required, completed, failed
 
+    # HITL Data
+    transcript_json: Mapped[dict] = mapped_column(JSON, nullable=True) # Full timestamped transcript for editor
+
     # Metadata
     source_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     translated_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)

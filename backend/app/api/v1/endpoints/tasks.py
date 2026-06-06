@@ -6,6 +6,7 @@ from app.services.ingestion import ingestion_service
 from app.tasks.translation import process_translation
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 import uuid
 
@@ -36,6 +37,34 @@ def get_workers_status():
         }
     except Exception:
         return {"error": "Could not inspect workers. Remote control might be disabled."}
+
+class ReviewUpdate(BaseModel):
+    transcript: List[Dict[str, Any]]
+
+@router.get("/{task_id}/transcript")
+def get_transcript(task_id: str, db: Session = Depends(get_db)):
+    task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task.transcript_json
+
+@router.post("/{task_id}/approve")
+def approve_transcript(task_id: str, review: ReviewUpdate, db: Session = Depends(get_db)):
+    """
+    Papercup-style HITL: Editor approves/edits transcript before final render.
+    """
+    task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.transcript_json = {"segments": review.transcript}
+    task.status = "processing" # Resume to final render
+    db.commit()
+
+    # Trigger the final part of the pipeline (synthesis + merge)
+    # process_final_assembly.delay(task_id)
+
+    return {"status": "approved"}
 
 @router.post("/")
 def create_task(request: TranslationRequest, db: Session = Depends(get_db)):

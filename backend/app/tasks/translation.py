@@ -66,11 +66,19 @@ def run_pipeline(task_id: str, url: str, target_lang: str):
             logger.warning(f"Task {task_id} blocked: {mod_result['reason']}")
             return {"status": "blocked", "reason": mod_result["reason"]}
 
-        # 4. Translation
+        # 4. Translation (Aggregated)
         logger.info(f"Step 4: Translating to {target_lang}...")
-        translated_segments = translation_service.translate_segments(transcript, target_lang)
+        from app.services.aggregator import aggregator_service
+        translated_segments = aggregator_service.translate_with_fallback(transcript, target_lang)
 
-        # 5. Synthesis (Hybrid Logic: Clone for Main, Narrator for Guest)
+        # 4.1 Save for HITL Review
+        with SessionLocal() as db:
+            task = db.query(TranslationTask).filter(TranslationTask.id == task_id).first()
+            if task:
+                task.transcript_json = {"segments": translated_segments}
+                db.commit()
+
+        # 5. Synthesis (Aggregated & Hybrid Logic)
         logger.info(f"Step 5: Synthesizing new audio segments (Hybrid Mode)...")
         # In a real run, we'd iterate and call specific TTS providers per speaker
         synthesis_service.synthesize_segments(translated_segments, task_id, lang=target_lang)

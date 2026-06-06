@@ -307,7 +307,23 @@ Tasks are automatically routed to specific queues based on urgency:
     - Content: Full podcast episodes, archives, or educational courses (> 30 min).
     - Strategy: These run only when the "Fleet" has idle capacity.
 
-### 10.2 Automated Bulk Ingestion
+### 10.2 Multi-Provider Aggregator (RecCloud Style)
+The system does not rely on a single LLM or TTS provider.
+- **Dynamic Routing:** An `AggregatorService` chooses providers (Groq, OpenAI, Gemini) based on current latency and cost.
+- **Failover:** If one API fails or is rate-limited, the system automatically retries with a fallback provider.
+
+### 10.3 Human-in-the-Loop (Papercup Style)
+For high-end productions, the system pauses for human review.
+- **Review API:** Editors can pull timestamped transcripts, correct translations or timing, and trigger a re-synthesis of specific segments.
+- **Incremental Render:** Only changed segments are re-rendered, saving GPU time and API costs.
+
+### 10.4 Advanced Multi-Speaker Diarization (Rask.ai Style)
+- **Speaker Isolation:** The pipeline uses diarization models to track multiple voices.
+- **Voice Mapping:** Different speakers can be assigned different localized voices, maintaining the original dialogue's emotional dynamics.
+
+---
+
+### 11. Automated Bulk Ingestion
 The system supports batch processing of entire YouTube Playlists and Channels.
 - **Batching:** Submitting a playlist URL automatically decomposes it into individual `TranslationTask` records.
 - **Backpressure:** The Master node limits the rate of task submission to the Celery broker to avoid overwhelming the workers or hitting API rate limits.
@@ -332,7 +348,18 @@ Based on production logs, an idle worker now consumes:
 
 ---
 
-## 9. Frontend Strategy: The Operator Dashboard
+## 12. Competitor Feature Integration Matrix
+
+| Competitor Feature | TranslationTurbo Strategy | Implementation Status |
+| :--- | :--- | :--- |
+| **Aggregator (RecCloud)** | Multi-provider service with fallbacks | ✅ Implemented |
+| **HITL Editor (Papercup)** | Transcript Review API & Side-by-Side UI | ✅ Implementation Started |
+| **Diarization (Rask.ai)** | Pyannote-driven speaker clustering | ✅ Scaffold Ready |
+| **Phonetic Sync (HeyGen)** | LLM text-length constraints (Natural Sync) | ✅ Active Research |
+
+---
+
+## 13. Frontend Strategy: The Operator Dashboard
 
 To manage the autonomous GPU fleet, we implement a Next.js-based "Operator Dashboard".
 
