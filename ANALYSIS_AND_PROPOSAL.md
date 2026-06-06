@@ -6,7 +6,7 @@ MoneyPrinterTurbo is an excellent base for building a video translation system d
 
 ### 1.1 Existing Strengths
 - **Service Orchestration (`app/services/task.py`):** The pipeline approach (Script -> Audio -> Subtitles -> Video) is exactly what's needed for translation.
-- **Multi-Model Support:** Native integration with OpenAI, Azure, Gemini, and various TTS providers makes it flexible for different budget/quality requirements.
+- **Multi-Model Support:** Native integration with OpenAI, Azure, Google Gemini, and various TTS providers. This allows for immediate use of "Free-Tier" models like Gemini 1.5 Flash.
 - **Subtitle Logic (`app/services/subtitle.py`):** Uses `faster-whisper` for transcription and has logic for "correcting" subtitles against a script.
 - **Video Composition (`app/services/video.py`):** Uses MoviePy for rendering, which is developer-friendly for adding overlays and subtitles.
 
@@ -40,7 +40,8 @@ To meet the requirements of a **Mass Translation Firm**, we will extend MPT into
 2.  **Audio Processing (New):**
     - Use **Demucs** or **Spleeter** to separate the audio into `vocal.wav` and `background_music.wav`.
 3.  **Transcription:** `vocal.wav` -> **Faster-Whisper** -> Timestamped Transcript (JSON/SRT).
-4.  **Translation:** Transcript -> **LLM (GPT-4o)** -> Translated Script.
+4.  **Translation:** Transcript -> **LLM (Groq / Gemini 1.5 Flash)** -> Translated Script.
+    - *High-Speed/Free Tier:* **Groq (Llama 3)** provides near-instant translation at zero or very low cost. **Google Gemini 1.5 Flash** (via AI Studio) offers a generous free tier for context-aware localization.
     - *Context-aware translation:* Provide the LLM with the video title/description for better accuracy.
 5.  **Review Portal (New Web Module):**
     - A simple Streamlit/React interface where a human editor can adjust the translated text.
@@ -119,7 +120,8 @@ For a "Firm" level of quality, automation is rarely 100% perfect.
 1.  **VocalSeparationService:**
     - Wrapper for `demucs`. Input: MP4. Output: `vocals.wav`, `no_vocals.wav`.
 2.  **AdvancedTranslator:**
-    - Uses GPT-4o with a custom system prompt focusing on "YouTube Style Localization".
+    - Uses GPT-4o, **Groq (Llama 3)**, or **Gemini 1.5 Flash**.
+    - System prompt focusing on "YouTube Style Localization".
     - Handles slang, idioms, and culture-specific terms.
 3.  **VoiceCloneTTS:**
     - Integration with ElevenLabs API for instant voice cloning.
@@ -130,13 +132,32 @@ For a "Firm" level of quality, automation is rarely 100% perfect.
     - Uses Google OAuth2 for multi-channel management.
     - Schedules uploads, handles thumbnail uploading, and sets localized metadata.
 
+### 4.2 The "Zero-API-Cost" Configuration Profile
+For maximum profitability, the firm can run on this stack:
+
+| Module | Software | Provider | Cost |
+| :--- | :--- | :--- | :--- |
+| **Ingestion** | `yt-dlp` | Local | Free |
+| **Separation** | `demucs` | Local (GPU) | Free |
+| **Transcription**| `faster-whisper` | Local (GPU) | Free |
+| **Translation** | `Llama 3` | **Groq API** | Free (Beta) / Ultra Low |
+| **Translation** | `Gemini 1.5 Flash`| **Google AI Studio** | Free (up to 15 RPM) |
+| **Translation** | `Various Models` | **OpenRouter** | Free Models available |
+| **Voice Synthesis**| `edge-tts` | Microsoft Edge | Free |
+| **Rendering** | `FFmpeg` | Local | Free |
+
 ---
 
 ## 5. Generalization of Experience & Strategic Insights
 
 ### 5.1 Optimization of Operational Costs
 Running a mass translation firm involves heavy compute costs.
-- **Hybrid Infrastructure:** Use local GPU servers (e.g., RTX 4090s) for the most expensive tasks like Vocal Separation (Demucs) and Transcription (Faster-Whisper). Reserve cloud APIs (OpenAI, ElevenLabs) for tasks where quality/reliability is non-negotiable.
+
+- **"Free & Fast" AI Stack:**
+    - **Translation:** Use **Groq (Llama 3)** for ultra-fast processing, **Google Gemini 1.5 Flash** for its free tier, and **OpenRouter** for accessing a rotating pool of free/subsidized models.
+    - **Transcription:** Use **Local Faster-Whisper** on consumer GPUs (zero API cost).
+    - **Vocal Separation:** Use **Demucs** locally (zero API cost).
+- **Hybrid Infrastructure:** Use local GPU servers (e.g., RTX 4090s) for the most expensive compute tasks. Reserve paid cloud APIs (GPT-4o, ElevenLabs) only for high-priority "Premium" channels.
 - **Caching:** Cache translations of common phrases and metadata. If multiple channels translate the same viral news, reuse the translation core.
 
 ### 5.2 Maintaining "Channel Soul" (The Secret Sauce)
