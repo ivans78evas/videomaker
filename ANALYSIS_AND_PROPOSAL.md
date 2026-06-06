@@ -180,3 +180,22 @@ Translation is not just about words; it's about the "vibe."
 ### 5.4 Risk Management
 - **YouTube Policy:** Automated uploads can be flagged as "Spam" if not managed correctly. Using the Official YouTube API with proper OAuth flows and avoiding "bot-like" behavior (e.g., posting 100 videos in 1 minute) is essential.
 - **Copyright:** Always check if the original video has "Creative Commons" or if you have an explicit contract with the owner. The interaction module should store these contracts.
+
+---
+
+## 6. Open Source Benchmarks & Technology Trends
+
+A detailed look at leading open-source projects on GitHub reveals the "Gold Standard" for self-hosted video translation.
+
+| Project | Key Technologies | Notable Features | Strategy for our Firm |
+| :--- | :--- | :--- | :--- |
+| **[video-translator](https://github.com/overcrash66/video-translator)** | HDemucs, Faster-Whisper, NeMo Diarization, VoiceFixer | **Vocal Restoration:** Uses spectral matching to make TTS sound like the original. | Adopt their **EQ Spectral Matching** logic for premium clones. |
+| **[open-whisperer](https://github.com/othneildrew/open-whisperer)** | ffmpeg-python, argostranslate | **Monorepo Architecture:** Clean split between Next.js UI and Python backend. | Reuse their **Docker/Monorepo** structure for our Master-Worker setup. |
+| **[viva-translate](https://github.com/ai-learning-tools/viva-translate)** | Gladia, DeepL, Chrome Extensions | **Real-time Subtitles:** Focus on browser-based audio capture. | Potential for an **Internal Browser Tool** to capture "Non-Downloadable" partner content. |
+| **[VideoDubber](https://github.com/pypa/sampleproject)** (conceptual) | MoviePy, pydub, TTS | **Simple Pipeline:** High focus on ease of use. | Benchmark for our **"Fast Tier"** low-complexity tasks. |
+
+### 6.1 Emerging Technology Stack Trends
+- **Vocal Separation:** Transition from Spleeter to **HDemucs** (Meta) for much cleaner stem isolation with fewer artifacts.
+- **Diarization:** Using **NeMo MSDD** or **Pyannote 3.1** is mandatory for multi-speaker YouTube videos (interviews, podcasts).
+- **Audio Post-Processing:** Projects are increasingly using **VoiceFixer** or **RVC (Retrieval-based Voice Conversion)** to "clean up" robotic TTS artifacts and inject original room acoustics back into the translated track.
+- **LLM-Driven Sync:** Moving away from naive time-stretching toward **LLM-calculated syllable counts** to ensure the script fits the time window naturally.
