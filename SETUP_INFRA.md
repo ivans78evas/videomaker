@@ -85,9 +85,10 @@ Choose your configuration based on your Redis provider (Local Docker vs. Upstash
 
 ### Option B: Quota-Saver Mode (Upstash / Managed Redis)
 *Use this to stay within the 500k monthly command free tier.*
-- **Action:** Keep `polling_interval` at `10` or higher.
-- **Action:** Ensure `worker_enable_remote_control = False` and `worker_send_task_events = False` to stop unnecessary chatter.
-- **Impact:** Slight delay (up to 10s) in task pickup, but saves ~80% of command quota.
+- **Action:** Keep `polling_interval` at `40` or higher.
+- **Action:** Ensure `worker_enable_remote_control = False` and `worker_send_task_events = False`.
+- **Action:** Start workers with flags: `--without-gossip --without-mingle --without-heartbeat`.
+- **Impact:** Reduces command volume from ~1800/hr to nearly zero when idle.
 
 ### Option C: GPU Persistence (Google Drive)
 The Colab worker is pre-configured to mount `/content/drive`.

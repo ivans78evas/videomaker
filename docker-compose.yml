@@ -36,7 +36,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A app.celery_app:celery_app worker --loglevel=info -Q default,gpu_tasks
+    command: celery -A app.celery_app:celery_app worker --loglevel=info -Q default,gpu_tasks --without-gossip --without-mingle --without-heartbeat
     volumes:
       - ./backend:/app
       - storage_data:/app/storage
