@@ -307,7 +307,18 @@ Tasks are automatically routed to specific queues based on urgency:
     - Content: Full podcast episodes, archives, or educational courses (> 30 min).
     - Strategy: These run only when the "Fleet" has idle capacity.
 
-### 10.2 Fleet Observability: Heartbeat vs. Quota
+### 10.2 Automated Bulk Ingestion
+The system supports batch processing of entire YouTube Playlists and Channels.
+- **Batching:** Submitting a playlist URL automatically decomposes it into individual `TranslationTask` records.
+- **Backpressure:** The Master node limits the rate of task submission to the Celery broker to avoid overwhelming the workers or hitting API rate limits.
+
+### 10.3 Smart Content Moderation & Janitor Ops
+- **Moderation:** Every transcript is analyzed by an LLM-driven safety layer before synthesis. This prevents the generation of content that violates platform policies (e.g., hate speech, dangerous acts).
+- **Disk Management:** A built-in "Janitor Service" automatically purges multi-gigabyte temporary stems (vocal/BGM splits) immediately after successful assembly, allowing the worker to run indefinitely on limited storage (Colab/Docker volumes).
+
+---
+
+### 11. Fleet Observability: Heartbeat vs. Quota
 For ephemeral workers like Google Colab, knowing the "Fleet Size" is critical:
 - **Managed Mode (Upstash Optimized):** Disable default Celery gossip. Instead, the Master node relies on the **Redis Key Check** (Heartbeat).
 - **Headless Monitoring:** Use **Flower** in "Silent Mode" (events disabled) for visual tracking without exhausting the 500k monthly command quota.

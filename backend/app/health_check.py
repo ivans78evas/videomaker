@@ -1,7 +1,20 @@
 import sys
 import torch
+import subprocess
+
+def auto_update():
+    """
+    Ensures the worker is running the latest code from the repository.
+    """
+    try:
+        print("Checking for updates...")
+        subprocess.run(["git", "pull"], check=True, capture_output=True)
+    except Exception as e:
+        print(f"Update failed (skipping): {e}")
 
 def health_check():
+    # 1. Auto-update code before starting
+    auto_update()
     """
     Checks if GPU is accessible and necessary services are running.
     """

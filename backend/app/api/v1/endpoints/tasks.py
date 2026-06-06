@@ -2,6 +2,7 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models.models import TranslationTask
 from app.services.channel_service import channel_service
+from app.services.ingestion import ingestion_service
 from app.tasks.translation import process_translation
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -38,24 +39,34 @@ def get_workers_status():
 
 @router.post("/")
 def create_task(request: TranslationRequest, db: Session = Depends(get_db)):
-    task_id = str(uuid.uuid4())
+    # Handle both single URLs and Playlists
+    urls = ingestion_service.extract_playlist_urls(request.url)
 
+    task_ids = []
     # Ensure default channel exists for prototype via Service
     default_channel = channel_service.get_or_create_default_channel(db)
 
-    # Save to DB
-    new_task = TranslationTask(
-        id=task_id,
-        channel_id=default_channel.id,
-        source_url=request.url,
-        target_language=request.target_lang,
-        status="pending"
-    )
+    for url in urls:
+        task_id = str(uuid.uuid4())
+        # Save to DB
+        new_task = TranslationTask(
+            id=task_id,
+            channel_id=default_channel.id,
+            source_url=url,
+            target_language=request.target_lang,
+            status="pending"
+        )
+        db.add(new_task)
+        task_ids.append(task_id)
 
-    db.add(new_task)
     db.commit()
 
     # Send to Celery
-    process_translation.delay(task_id, request.url, request.target_lang)
+    for tid, url in zip(task_ids, urls):
+        process_translation.delay(tid, url, request.target_lang)
 
-    return {"task_id": task_id, "status": "queued"}
+    return {
+        "count": len(task_ids),
+        "task_ids": task_ids,
+        "status": "queued"
+    }

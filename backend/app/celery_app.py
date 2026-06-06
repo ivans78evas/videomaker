@@ -36,10 +36,6 @@ celery_app.conf.update(
     # Completely disable heartbeats (saves thousands of PUBLISH commands)
     worker_heartbeat_interval=None,
 
-    # Ensure events are off
-    worker_send_task_events=False,
-    task_send_sent_event=False,
-
     # Redundant but safe: disable all event-related chatter
     event_queue_expires=60,
     worker_event_delay=10.0,
