@@ -261,15 +261,26 @@ Scaling a mass translation firm requires a rigorous approach to infrastructure t
     - **Step-Parallelism:** While the GPU is busy with `Demucs` on Video A, the CPU can be busy with `yt-dlp` ingestion on Video B.
 - **Task Batching:** Group short videos (Shorts/TikToks) into batches to keep the GPU utilization at 100%.
 
-### 8.2 Hardware Requirements (Per Worker Node)
+### 8.2 Computational Tiers (From Zero to Enterprise)
 
-| Component | Minimum (Fast Tier) | Recommended (Enterprise) | Rationale |
+To satisfy the **Zero-Cost** requirement, the system can be deployed without purchasing any hardware by leveraging "Ephemeral Cloud Power":
+
+| Tier | Hardware Source | Cost | Technical Compromise |
 | :--- | :--- | :--- | :--- |
-| **GPU** | NVIDIA RTX 3060 (12GB) | **NVIDIA RTX 4090 (24GB)** | VRAM is the primary bottleneck for Demucs and Whisper Large-v3. |
-| **CPU** | 8 Cores (AMD/Intel) | 16+ Cores (Ryzen 9 / Threadripper) | FFmpeg and Python orchestration require high clock speeds. |
-| **RAM** | 32 GB | 64+ GB | Loading multiple models and high-res video buffers into memory. |
-| **Storage** | 1TB NVMe SSD | 4TB+ NVMe (RAID 0/1) | Fast I/O is critical for temporary video stems and cache. |
-| **Network** | 100 Mbps | 1 Gbps+ Dedicated | Rapid ingestion of 4K source files and high-res uploads. |
+| **Zero-Capex (Free)** | **Google Colab / Kaggle** | **$0** | Limited to 12h sessions; requires manual restart or automation scripts. |
+| **Budget (Local)** | Existing PC (CPU Only) | **$0** | Uses `Whisper-tiny` and `Demucs-light`. Processing is 5x-10x slower. |
+| **Cloud (Spot)** | Vast.ai / RunPod | ~$0.20/hr | No upfront cost (Opex only). Pay only when translating. |
+| **Enterprise** | NVIDIA RTX 4090 | High Upfront | Maximum throughput and data privacy for mass operations. |
+
+### 8.3 The "Pure Zero" Implementation Path (No Hardware, No API Fees)
+
+1.  **Orchestration:** Run the **Master Node** on **Oracle Cloud Free Tier** (Always Free ARM Ampere A1 instances with 24GB RAM).
+2.  **Worker (Processing):** Use **Google Colab** with a custom "headless" worker script that connects to the Master's Redis queue. This provides a **Free Tesla T4 GPU**.
+3.  **Storage:** Use the 20GB free storage in Oracle Cloud or a free tier of **Cloudflare R2** (up to 10GB).
+4.  **AI Models:**
+    - **Transcription:** `Faster-Whisper` (Large-v3) running on the free Colab GPU.
+    - **Translation:** **Groq / Gemini 1.5 Flash** (Free Tier).
+    - **Voice:** **Edge-TTS** (Free).
 
 ### 8.3 Infrastructure Scaling Logic
 - **Master Node:** Can be a standard cloud VPS (AWS EC2 t3.large). It only handles DB (PostgreSQL) and the Task Queue (Redis).
