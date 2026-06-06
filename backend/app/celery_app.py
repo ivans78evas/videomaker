@@ -23,22 +23,22 @@ celery_app.conf.update(
     # Disable task events (Flower will be less detailed, but saves thousands of commands)
     worker_send_task_events=False,
     task_send_sent_event=False,
+    task_track_started=False,
+    task_ignore_result=True, # Saves state updates
 
     # Reduce polling frequency (Strictly under 100 RPM across a fleet)
     broker_transport_options={
         'visibility_timeout': 3600,
-        'polling_interval': 40,  # Check for new tasks every 40s (1.5 RPM per worker)
+        'polling_interval': 60,  # Check for new tasks every 60s
         'fanout_prefix': True,
         'fanout_patterns': True,
     },
 
     # --- Extreme Quota Saving (Upstash Free Tier) ---
-    # Completely disable heartbeats (saves thousands of PUBLISH commands)
+    # Completely disable heartbeats and events
     worker_heartbeat_interval=None,
-
-    # Redundant but safe: disable all event-related chatter
-    event_queue_expires=60,
-    worker_event_delay=10.0,
+    worker_event_delay=100.0,
+    event_queue_expires=10,
 
     # Results cleanup (Saves storage)
     result_expires=3600,  # Clear results after 1 hour
