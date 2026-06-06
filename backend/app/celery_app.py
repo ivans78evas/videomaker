@@ -24,11 +24,25 @@ celery_app.conf.update(
     worker_send_task_events=False,
     task_send_sent_event=False,
 
-    # Reduce polling frequency (Default is often too aggressive for free tiers)
+    # Reduce polling frequency (Strictly under 100 RPM across a fleet)
     broker_transport_options={
         'visibility_timeout': 3600,
-        'polling_interval': 10  # Check for new tasks every 10s instead of 1s
+        'polling_interval': 40,  # Check for new tasks every 40s (1.5 RPM per worker)
+        'fanout_prefix': True,
+        'fanout_patterns': True,
     },
+
+    # --- Extreme Quota Saving (Upstash Free Tier) ---
+    # Completely disable heartbeats (saves thousands of PUBLISH commands)
+    worker_heartbeat_interval=None,
+
+    # Ensure events are off
+    worker_send_task_events=False,
+    task_send_sent_event=False,
+
+    # Redundant but safe: disable all event-related chatter
+    event_queue_expires=60,
+    worker_event_delay=10.0,
 
     # Results cleanup (Saves storage)
     result_expires=3600,  # Clear results after 1 hour

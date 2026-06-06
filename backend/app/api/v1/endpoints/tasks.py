@@ -1,6 +1,7 @@
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.models import TranslationTask, Partner, YouTubeChannel
+from app.models.models import TranslationTask
+from app.services.channel_service import channel_service
 from app.tasks.translation import process_translation
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -34,24 +35,8 @@ def get_workers_status():
 def create_task(request: TranslationRequest, db: Session = Depends(get_db)):
     task_id = str(uuid.uuid4())
 
-    # Ensure default channel exists for prototype
-    default_channel = db.query(YouTubeChannel).filter(YouTubeChannel.id == "default_channel").first()
-    if not default_channel:
-        # Need a partner first
-        partner = db.query(Partner).first()
-        if not partner:
-            partner = Partner(name="Default Partner", email="partner@example.com")
-            db.add(partner)
-            db.flush()
-
-        default_channel = YouTubeChannel(
-            id="default_channel",
-            partner_id=partner.id,
-            title="Default Channel",
-            credentials={}
-        )
-        db.add(default_channel)
-        db.flush()
+    # Ensure default channel exists for prototype via Service
+    default_channel = channel_service.get_or_create_default_channel(db)
 
     # Save to DB
     new_task = TranslationTask(

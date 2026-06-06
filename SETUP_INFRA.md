@@ -34,14 +34,34 @@ The workflow is located in `.github/workflows/oci_hunter.yml`. It will run every
 
 ---
 
-## 2. Google Colab "Headless Worker"
+## 2. Managed Redis: Upstash (Zero-Cost Queue)
+
+To connect the Master node (Oracle) and the Workers (Colab) without managing your own networking/VPN, we use **Upstash**, which provides a "Serverless Redis" with a generous free tier.
+
+### Setup Instructions
+1. **Sign Up:** Create a free account at [upstash.com](https://upstash.com/).
+2. **Create Database:**
+   - Type: Redis
+   - Region: Select the one closest to your Oracle Cloud region (e.g., Frankfurt or US-East).
+   - TLS: **Enable TLS** (Required for secure cross-cloud communication).
+3. **Get Connection String:**
+   - Copy the "URL" (it starts with `redis://` or `rediss://`).
+   - **IMPORTANT:** If you use TLS, ensure the protocol is `rediss://` (with an extra 's').
+
+### Free Tier Limits (The "500k" Rule)
+The Upstash free tier allows **500,000 commands per month**. To stay within this limit:
+- The system is pre-configured with a 10s polling interval.
+- Avoid enabling "Celery Events" or "Gossip" on workers (this is handled in `app/celery_app.py`).
+
+---
+
+## 3. Google Colab "Headless Worker"
 Since Google Colab sessions expire, we use a worker script that connects to our Master node's Redis queue.
 
 ### Steps
 1. **Master Node:** Once your OCI instance is ready, install Docker and run the Master container (Redis/FastAPI).
     - **Security Rule:** You **MUST** open port `6379` (Redis) and `8000` (API) in the Oracle Cloud VCN Security List (Ingress Rules) to allow the Colab worker to connect.
     - **Redis Bind:** The provided `docker-compose.yml` is configured to bind Redis to `0.0.0.0` for external access.
-    - **Pro Tip (Upstash):** If you prefer not to manage Redis on your server, use [Upstash](https://upstash.com/). It's free-tier friendly and works over TLS (use `rediss://` scheme in your connection string).
 2. **Colab Notebook:**
    - Open the provided `infra/colab_worker/worker_colab.ipynb` in Google Colab.
    - Set the `MASTER_IP` to your OCI server's public IP.
@@ -54,7 +74,7 @@ Since Google Colab sessions expire, we use a worker script that connects to our 
 
 ---
 
-## 3. Reliability vs. Cost: Performance Tuning
+## 4. Reliability vs. Cost: Performance Tuning
 
 Choose your configuration based on your Redis provider (Local Docker vs. Upstash).
 

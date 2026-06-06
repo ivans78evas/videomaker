@@ -26,7 +26,9 @@ class AssemblerService:
 
         # Mix delayed segments
         mix_inputs = "".join([f"[a{i}]" for i in range(len(segments))])
-        filter_parts.append(f"{mix_inputs}amix=inputs={len(segments)}[vocals]")
+        # Note: amix needs careful volume handling or it gets quiet.
+        # Using normalized mix if multiple segments overlap.
+        filter_parts.append(f"{mix_inputs}amix=inputs={len(segments)}:dropout_transition=0[vocals]")
 
         # Mix vocals with BGM
         filter_parts.append(f"[vocals][{bgm_index}:a]amix=inputs=2:duration=first[final_a]")
