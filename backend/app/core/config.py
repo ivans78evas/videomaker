@@ -27,6 +27,10 @@ class Settings(BaseSettings):
             self.CELERY_BROKER_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
         # Celery requires explicit SSL params for rediss://
+        # Upstash specifically requires rediss:// and cert params
+        if ".upstash.io" in self.CELERY_BROKER_URL and self.CELERY_BROKER_URL.startswith("redis://"):
+            self.CELERY_BROKER_URL = self.CELERY_BROKER_URL.replace("redis://", "rediss://", 1)
+
         if self.CELERY_BROKER_URL.startswith("rediss://") and "ssl_cert_reqs" not in self.CELERY_BROKER_URL:
             separator = "&" if "?" in self.CELERY_BROKER_URL else "?"
             self.CELERY_BROKER_URL += f"{separator}ssl_cert_reqs=none"
