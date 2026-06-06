@@ -289,6 +289,42 @@ To satisfy the **Zero-Cost** requirement, the system can be deployed without pur
 
 ---
 
+## 9. Identified Gaps & Future Roadmap (The "Missing Layer")
+
+While the current blueprint covers the primary audio-visual pipeline, a truly "Elite" translation firm must address the following neglected areas to outperform competitors:
+
+### 9.1 Visual Context & On-Screen Text (OCR-to-Translate)
+- **The Gap:** Audio is localized, but charts, slides, and lower-third titles remain in the source language.
+- **Solution:** Implement an **In-Video Text Replacer**.
+    - Use **PaddleOCR** to detect text blocks.
+    - Use **AI Inpainting** (e.g., Lama) to remove the original text.
+    - Overlay translated text using the same font and style (Font matching via CNNs).
+
+### 9.2 Revenue Share & Automated Payouts
+- **The Gap:** Managing mass partners requires automated accounting.
+- **Solution:** **FinOps Module**.
+    - Integration with YouTube Reporting API to pull monthly earnings per localized channel.
+    - Automated calculation of the Firm's vs. Creator's share.
+    - Integration with Stripe/Wise for automatic payouts.
+
+### 9.3 Content ID & Metadata Optimization
+- **The Gap:** Direct translation of titles/tags often fails to capture local search trends.
+- **Solution:** **SEO-Localizer**.
+    - Instead of 1:1 translation, use LLMs to perform **Keyword Research** for the target region.
+    - **Thumbnails:** Automated generation of localized thumbnails (replacing text on the original thumbnail using Image-to-Image models).
+
+### 9.4 Feedback-Driven Glossary (Self-Learning)
+- **The Gap:** Recurring translation errors for brand names or niche slang.
+- **Solution:** **Dynamic Glossary Service**.
+    - When a Human Reviewer fixes a word, it is automatically added to a per-channel glossary that is injected into the LLM prompt for all future videos.
+
+### 9.5 YouTube "AI-Generated Content" Transparency
+- **The Gap:** Platform policies require labeling AI-altered content.
+- **Solution:** **Compliance Engine**.
+    - Automatically check the "Altered Content" box in the YouTube upload metadata for videos involving voice cloning to ensure channel safety and avoid shadow-bans.
+
+---
+
 ## 6. Open Source Benchmarks & Technology Trends
 
 A detailed look at leading open-source projects on GitHub reveals the "Gold Standard" for self-hosted video translation.
