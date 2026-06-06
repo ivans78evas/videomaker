@@ -51,3 +51,25 @@ Since Google Colab sessions expire, we use a worker script that connects to our 
 ### Automation
 - Use browser extensions like "Auto Refresh Plus" to keep the Colab tab alive.
 - For longer tasks, the system supports persistent state, allowing workers to resume from the Redis queue after a restart.
+
+---
+
+## 3. Reliability vs. Cost: Performance Tuning
+
+Choose your configuration based on your Redis provider (Local Docker vs. Upstash).
+
+### Option A: Performance Mode (Local Redis)
+*Use this if you are running Redis on your own OCI/Private server.*
+- **Action:** In `backend/app/celery_app.py`, you can reduce `broker_transport_options['polling_interval']` to `1` or `2`.
+- **Impact:** Near-instant task pickup. High command volume (unlimited on local).
+
+### Option B: Quota-Saver Mode (Upstash / Managed Redis)
+*Use this to stay within the 500k monthly command free tier.*
+- **Action:** Keep `polling_interval` at `10` or higher.
+- **Action:** Ensure `worker_enable_remote_control = False` and `worker_send_task_events = False` to stop unnecessary chatter.
+- **Impact:** Slight delay (up to 10s) in task pickup, but saves ~80% of command quota.
+
+### Option C: GPU Persistence (Google Drive)
+The Colab worker is pre-configured to mount `/content/drive`.
+- **Benefit:** If the Colab runtime disconnects, processed fragments (audio/video clips) are saved to Drive.
+- **Resumption:** When you restart the worker, it checks for existing files before re-downloading or re-processing, preventing "burned" credits on synthesis APIs.

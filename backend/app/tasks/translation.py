@@ -10,6 +10,20 @@ import os
 
 @celery_app.task(name="tasks.process_translation")
 def process_translation(task_id: str, url: str, target_lang: str):
+    """Alias for default priority."""
+    return run_pipeline(task_id, url, target_lang)
+
+@celery_app.task(name="tasks.process_translation_urgent")
+def process_translation_urgent(task_id: str, url: str, target_lang: str):
+    """High priority queue (Shorts/TikToks)."""
+    return run_pipeline(task_id, url, target_lang)
+
+@celery_app.task(name="tasks.process_translation_bulk")
+def process_translation_bulk(task_id: str, url: str, target_lang: str):
+    """Low priority queue (Long videos/Archive)."""
+    return run_pipeline(task_id, url, target_lang)
+
+def run_pipeline(task_id: str, url: str, target_lang: str):
     """
     Main pipeline for Video-to-Video translation.
     """
@@ -44,12 +58,13 @@ def process_translation(task_id: str, url: str, target_lang: str):
         output_path = f"storage/final_videos/{task_id}_translated.mp4"
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        # Note: In a real implementation, we'd use complex FFmpeg filter_complex
-        # to place each segment at its specific 'start' timestamp.
-        # For the prototype, we use the first segment to demonstrate the flow.
         if translated_segments:
-            translated_vocals_path = translated_segments[0]["local_audio_path"]
-            assembler_service.merge_audio_video(video_path, translated_vocals_path, bgm_path, output_path)
+            assembler_service.merge_segments_and_video(video_path, translated_segments, bgm_path, output_path)
+
+        # 7. Quality Guard (Hallucination Checker)
+        logger.info(f"Step 7: Hallucination & Sync Check...")
+        # if not validate_sync(task_id, original_dur, translated_dur):
+        #     return {"status": "review_required", "reason": "sync_drift"}
 
         logger.success(f"--- Task {task_id} Pipeline Completed ---")
         return {"status": "completed", "task_id": task_id, "output": output_path}

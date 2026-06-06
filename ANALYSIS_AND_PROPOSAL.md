@@ -292,6 +292,28 @@ To satisfy the **Zero-Cost** requirement, the system can be deployed without pur
 
 ---
 
+## 10. Operational Efficiency: Priority & Fleet Management
+
+To maximize the ROI of free GPU power (Colab) and stay within Redis quotas (Upstash), the firm uses a tiered priority system.
+
+### 10.1 Multi-Queue Strategy
+Tasks are automatically routed to specific queues based on urgency:
+- **`urgent_tasks` (High Priority):**
+    - Content: YouTube Shorts, TikToks, Reels (< 60s).
+    - Goal: 5-minute turnaround.
+- **`default` (Medium Priority):**
+    - Content: Standard YouTube videos (5-15 min).
+- **`bulk_tasks` (Low Priority):**
+    - Content: Full podcast episodes, archives, or educational courses (> 30 min).
+    - Strategy: These run only when the "Fleet" has idle capacity.
+
+### 10.2 Fleet Observability: Heartbeat vs. Quota
+For ephemeral workers like Google Colab, knowing the "Fleet Size" is critical:
+- **Managed Mode (Upstash Optimized):** Disable default Celery gossip. Instead, the Master node relies on the **Redis Key Check** (Heartbeat).
+- **Headless Monitoring:** Use **Flower** in "Silent Mode" (events disabled) for visual tracking without exhausting the 500k monthly command quota.
+
+---
+
 ## 9. Identified Gaps & Future Roadmap (The "Missing Layer")
 
 While the current blueprint covers the primary audio-visual pipeline, a truly "Elite" translation firm must address the following neglected areas to outperform competitors:

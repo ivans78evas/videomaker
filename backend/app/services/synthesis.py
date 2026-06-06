@@ -2,6 +2,7 @@ import asyncio
 import edge_tts
 import os
 from pathlib import Path
+from typing import List, Dict, Any
 
 class SynthesisService:
     def __init__(self, output_dir: str = "storage/translated_audio"):

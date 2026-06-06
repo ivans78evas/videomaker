@@ -36,6 +36,27 @@ celery_app.conf.update(
     # Disable remote control (Saves commands used for inspect/control)
     # Note: This will disable the /workers API endpoint, but it's necessary to save quota.
     worker_enable_remote_control=False,
+
+    # --- Priority & Routing Configuration ---
+    task_default_queue='default',
+    task_queues={
+        'urgent_tasks': {
+            'exchange': 'urgent_tasks',
+            'routing_key': 'urgent_tasks',
+        },
+        'default': {
+            'exchange': 'default',
+            'routing_key': 'default',
+        },
+        'bulk_tasks': {
+            'exchange': 'bulk_tasks',
+            'routing_key': 'bulk_tasks',
+        },
+    },
+    task_routes={
+        'tasks.process_translation_urgent': {'queue': 'urgent_tasks'},
+        'tasks.process_translation_bulk': {'queue': 'bulk_tasks'},
+    },
 )
 
 # Use include to avoid circular imports
