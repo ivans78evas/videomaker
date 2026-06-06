@@ -1,4 +1,4 @@
-from app.celery_app import celery_app
+from app.celery_app import app as celery_app
 from app.services.ingestion import ingestion_service
 from app.services.audio_processing import audio_processing_service
 from app.services.transcription import transcription_service
