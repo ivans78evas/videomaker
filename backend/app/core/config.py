@@ -25,6 +25,12 @@ class Settings(BaseSettings):
         # Use full URL if provided, otherwise construct from host/port
         if not self.CELERY_BROKER_URL:
             self.CELERY_BROKER_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
+        # Celery requires explicit SSL params for rediss://
+        if self.CELERY_BROKER_URL.startswith("rediss://") and "ssl_cert_reqs" not in self.CELERY_BROKER_URL:
+            separator = "&" if "?" in self.CELERY_BROKER_URL else "?"
+            self.CELERY_BROKER_URL += f"{separator}ssl_cert_reqs=none"
+
         if not self.CELERY_RESULT_BACKEND:
             self.CELERY_RESULT_BACKEND = self.CELERY_BROKER_URL
 
