@@ -332,7 +332,24 @@ Based on production logs, an idle worker now consumes:
 
 ---
 
-## 9. Identified Gaps & Future Roadmap (The "Missing Layer")
+## 9. Frontend Strategy: The Operator Dashboard
+
+To manage the autonomous GPU fleet, we implement a Next.js-based "Operator Dashboard".
+
+### 9.1 Technical Stack
+- **Framework:** Next.js 14 (App Router).
+- **UI:** shadcn/ui + Tailwind CSS (Enterprise-grade visual consistency).
+- **State Management:** TanStack Query for real-time task polling without full-page reloads.
+- **API Communication:** TypeScript-typed client mapping exactly to Pydantic schemas.
+
+### 9.2 Key Features
+- **Fleet Pulse:** Visual indicator of active workers and their health status (from the `health_check` endpoint).
+- **Bulk Task Ingestion:** A simplified interface to drop YouTube playlist URLs and watch the "Firm" decompose and process them.
+- **Human-in-the-Loop (Roadmap):** A side-by-side subtitle editor allowing human reviewers to refine translations before the final FFmpeg render.
+
+---
+
+## 10. Identified Gaps & Future Roadmap (The "Missing Layer")
 
 While the current blueprint covers the primary audio-visual pipeline, a truly "Elite" translation firm must address the following neglected areas to outperform competitors:
 
