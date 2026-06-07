@@ -1,96 +1,54 @@
-# Infrastructure Setup Guide: Zero-Cost Automation
+# Инфраструктура и масштабирование: От 0 до Бесконечности
 
-This guide explains how to set up the automated systems to secure "Always Free" resources for the TranslationTurbo firm.
-
-## 1. Oracle Cloud (OCI) Capacity Hunter
-To bypass the "Out of host capacity" error for ARM Ampere (A1) instances, we use a GitHub Actions script that polls the OCI API.
-
-### Prerequisites
-1. **OCI Account:** Sign up at [oracle.com/cloud/free/](https://www.oracle.com/cloud/free/).
-2. **API Key:**
-   - Go to OCI Console -> **User Settings** -> **API Keys**.
-   - Click **Add API Key**, download the Private Key (you will need its content).
-   - Copy the **Configuration File Snippet** (contains User OCID, Tenancy OCID, Fingerprint, Region).
-
-### GitHub Secrets Setup
-In your GitHub repository, go to **Settings** -> **Secrets and variables** -> **Actions** and add the following:
-
-| Secret Name | Value Example |
-| :--- | :--- |
-| `OCI_USER_OCID` | `ocid1.user.oc1..aaaaaa...` |
-| `OCI_TENANCY_OCID` | `ocid1.tenancy.oc1..aaaaaa...` |
-| `OCI_FINGERPRINT` | `xx:xx:xx:...` |
-| `OCI_KEY_CONTENT` | Paste the content of your `.pem` private key |
-| `OCI_REGION` | `eu-frankfurt-1` |
-| `OCI_COMPARTMENT_OCID` | Usually same as Tenancy OCID |
-| `OCI_SUBNET_OCID` | Go to Networking -> VCN -> Subnets and copy OCID |
-| `OCI_IMAGE_OCID` | Find "Oracle Linux 8" (ARM) image OCID for your region |
-| `OCI_SSH_PUBLIC_KEY` | Your `ssh-rsa ...` public key for access |
-| `TELEGRAM_BOT_TOKEN` | (Optional) Your bot token from @BotFather |
-| `TELEGRAM_CHAT_ID` | (Optional) Your Chat ID from @userinfobot |
-
-### Activation
-The workflow is located in `.github/workflows/oci_hunter.yml`. It will run every 5 minutes automatically. You can also trigger it manually from the **Actions** tab.
+Система TranslationTurbo спроектирована так, чтобы стоимость инфраструктуры росла линейно только вместе с вашей прибылью.
 
 ---
 
-## 2. Managed Redis: Upstash (Zero-Cost Queue)
+## Этап 1: Zero-Capex (Старт без вложений)
+**Цель:** Получить первые кейсы и первые деньги.
+- **Master Node:** Oracle Cloud Always Free (ARM Ampere A1).
+- **GPU Workers:** Google Colab (Tesla T4).
+- **Broker:** Upstash Redis (Free Tier).
+- **Затраты:** $0 / мес.
+- **Мощность:** ~2-3 видео в час.
 
-To connect the Master node (Oracle) and the Workers (Colab) without managing your own networking/VPN, we use **Upstash**, which provides a "Serverless Redis" with a generous free tier.
+## Этап 2: Производственная эффективность (Vast.ai / Clore.ai)
+**Цель:** Масштабирование на 10+ каналов.
+- **Master Node:** Переезд на VPS за $5-10/мес (DigitalOcean / Hetzner).
+- **GPU Workers:** Аренда инстансов на Vast.ai (RTX 3060 12GB).
+- **Затраты:** ~$30-50 / мес на GPU (при 24/7 загрузке одного воркера).
+- **Мощность:** ~20-30 видео в час.
 
-### Setup Instructions
-1. **Sign Up:** Create a free account at [upstash.com](https://upstash.com/).
-2. **Create Database:**
-   - Type: Redis
-   - Region: Select the one closest to your Oracle Cloud region (e.g., Frankfurt or US-East).
-   - TLS: **Enable TLS** (Required for secure cross-cloud communication).
-3. **Get Connection String:**
-   - Copy the "URL" (it starts with `redis://` or `rediss://`).
-   - **IMPORTANT:** If you use TLS, ensure the protocol is `rediss://` (with an extra 's').
-
-### Free Tier Limits (The "500k" Rule)
-The Upstash free tier allows **500,000 commands per month**. To stay within this limit:
-- The system is pre-configured with a 10s polling interval.
-- Avoid enabling "Celery Events" or "Gossip" on workers (this is handled in `app/celery_app.py`).
-
----
-
-## 3. Google Colab "Headless Worker"
-Since Google Colab sessions expire, we use a worker script that connects to our Master node's Redis queue.
-
-### Steps
-1. **Master Node:** Once your OCI instance is ready, install Docker and run the Master container (Redis/FastAPI).
-    - **Security Rule:** You **MUST** open port `6379` (Redis) and `8000` (API) in the Oracle Cloud VCN Security List (Ingress Rules) to allow the Colab worker to connect.
-    - **Redis Bind:** The provided `docker-compose.yml` is configured to bind Redis to `0.0.0.0` for external access.
-2. **Colab Notebook:**
-   - Open the provided `infra/colab_worker/worker_colab.ipynb` in Google Colab.
-   - Set the `MASTER_IP` to your OCI server's public IP.
-   - Enable **GPU Acceleration** (Edit -> Notebook Settings -> T4 GPU).
-   - Run the cells to start the worker.
-
-### Automation
-- Use browser extensions like "Auto Refresh Plus" to keep the Colab tab alive.
-- For longer tasks, the system supports persistent state, allowing workers to resume from the Redis queue after a restart.
+## Этап 3: Корпоративный уровень (RunPod / Lambda)
+**Цель:** Работа с миллионными каналами и VIP-заказы.
+- **GPU Workers:** RunPod Secure Cloud (A100 / H100) для сверхбыстрого рендеринга и тяжелых LLM.
+- **Затраты:** $200+ / мес.
+- **Мощность:** Сотни видео в сутки.
 
 ---
 
-## 4. Reliability vs. Cost: Performance Tuning
+## Инструкция по запуску воркера на Vast.ai
 
-Choose your configuration based on your Redis provider (Local Docker vs. Upstash).
+1.  **Выбор инстанса:**
+    - Зайдите на [vast.ai](https://vast.ai/console/create/).
+    - В фильтрах выберите: `GPU RAM >= 12GB`, `DLPerf >= 10`.
+    - Сортировка по `Price (Inc. Storage)`.
+2.  **Настройка Docker:**
+    - Используйте образ `python:3.11-slim` или наш кастомный.
+    - В `On-start script` вставьте:
+      ```bash
+      apt-get update && apt-get install -y ffmpeg git
+      pip install celery redis torch torchaudio yt-dlp
+      git clone https://github.com/your-repo/translation-turbo.git
+      cd translation-turbo/backend
+      celery -A app.celery_app worker --loglevel=info -Q default,bulk_tasks
+      ```
+3.  **Переменные окружения:**
+    - Не забудьте прописать `CELERY_BROKER_URL` и `OPENROUTER_API_KEY`.
 
-### Option A: Performance Mode (Local Redis)
-*Use this if you are running Redis on your own OCI/Private server.*
-- **Action:** In `backend/app/celery_app.py`, you can reduce `broker_transport_options['polling_interval']` to `1` or `2`.
-- **Impact:** Near-instant task pickup. High command volume (unlimited on local).
+---
 
-### Option B: Quota-Saver Mode (Upstash / Managed Redis)
-*Use this to stay within the 500k monthly command free tier.*
-- **Action:** Keep `polling_interval` at `40` or higher.
-- **Action:** Ensure `worker_enable_remote_control = False` and `worker_send_task_events = False`.
-- **Action:** Start workers with flags: `--without-gossip --without-mingle --without-heartbeat`.
-- **Impact:** Reduces command volume from ~1800/hr to nearly zero when idle.
-
-### Option C: GPU Persistence (Google Drive)
-The Colab worker is pre-configured to mount `/content/drive`.
-- **Benefit:** If the Colab runtime disconnects, processed fragments (audio/video clips) are saved to Drive.
-- **Resumption:** When you restart the worker, it checks for existing files before re-downloading or re-processing, preventing "burned" credits on synthesis APIs.
+## Почему P2P-маркетплейсы выгоднее облаков?
+- **Цена:** В 10-20 раз дешевле AWS/Google Cloud.
+- **Конфиденциальность:** Вы полностью контролируете инстанс.
+- **Гибкость:** Можно арендовать 10 штук RTX 3060 на 1 час для "залпового" перевода целого плейлиста, а затем выключить их.
