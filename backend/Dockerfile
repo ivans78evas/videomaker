@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 WORKDIR /app
 
@@ -8,16 +8,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     libpq-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
-
-# Install uv for fast dependency management
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Copy dependency files
 COPY pyproject.toml .
-# In a real environment, we'd copy uv.lock too
-# COPY uv.lock .
 
 # Install dependencies using uv
 RUN uv pip install --system .
@@ -26,7 +21,11 @@ RUN uv pip install --system .
 COPY . .
 
 # Create storage directories
-RUN mkdir -p backend/storage/raw_videos backend/storage/audio_stems backend/storage/transcripts
+RUN mkdir -p backend/storage/raw_videos \
+    backend/storage/audio_stems \
+    backend/storage/transcripts \
+    backend/storage/translated_audio \
+    backend/storage/final_videos
 
 # Expose port
 EXPOSE 8000

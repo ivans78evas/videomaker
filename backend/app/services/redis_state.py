@@ -2,18 +2,25 @@ import redis
 import json
 from typing import Dict, Any, Optional
 from app.core.config import settings
+import urllib.parse as ul
 
 class RedisStateMachine:
     def __init__(self):
-        # We use a standard redis connection, ensuring it handles TLS if needed
-        import urllib.parse as ul
-        p = ul.urlparse(settings.CELERY_BROKER_URL)
-        ssl = p.scheme == "rediss"
+        # We use a standard redis connection
+        url = settings.CELERY_BROKER_URL
+        p = ul.urlparse(url)
 
-        self.client = redis.from_url(
-            settings.CELERY_BROKER_URL,
-            ssl_cert_reqs="none" if ssl else None
-        )
+        # Security/Optimization:
+        # Only apply manual SSL params if not already in the URL
+        # and if the scheme is rediss://
+        is_ssl = p.scheme == "rediss"
+
+        # Strip ssl_cert_reqs from kwargs if it's already in the URL to avoid duplication errors
+        kwargs = {}
+        if is_ssl and "ssl_cert_reqs" not in p.query:
+            kwargs["ssl_cert_reqs"] = "none"
+
+        self.client = redis.from_url(url, **kwargs)
 
     def update_task_state(self, task_id: str, updates: Dict[str, Any]):
         """

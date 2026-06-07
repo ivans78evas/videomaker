@@ -5,8 +5,8 @@ import json
 import httpx
 from loguru import logger
 
-# Add backend to path if running from repo root
-sys.path.append(str(Path(__file__).parent.parent / "backend"))
+# Correct path resolution for portability
+sys.path.append(str(Path(__file__).parent.parent.resolve() / "backend"))
 
 def check_env():
     """Diagnostic check for keys and connectivity."""
@@ -22,32 +22,39 @@ def check_env():
     return True
 
 def test_api_connectivity():
-    """Verifies that the server can reach API endpoints."""
-    endpoints = ["https://api.groq.com", "https://openrouter.ai"]
-    for url in endpoints:
+    """Verifies that the server can reach API endpoints using standard health paths."""
+    endpoints = {
+        "Groq": "https://api.groq.com/openai/v1/models",
+        "OpenRouter": "https://openrouter.ai/api/v1/models"
+    }
+    for name, url in endpoints.items():
         try:
-            httpx.get(url, timeout=5.0)
-            logger.success(f"🌐 Connected to {url}")
+            headers = {"Authorization": f"Bearer {os.getenv(name.upper() + '_API_KEY', 'test')}"}
+            httpx.get(url, headers=headers, timeout=5.0)
+            logger.success(f"🌐 Connected to {name} Gateway")
         except Exception as e:
-            logger.error(f"❌ Failed to reach {url}: {e}")
+            logger.error(f"❌ Failed to reach {name}: {e}")
 
 def run_benchmark():
-    # Load backend services only if env is ready
     try:
         from app.services.llm_router import unified_llm
         from app.services.openrouter_guard import openrouter_guard
-    except ImportError:
-        logger.error("Could not import backend services. Ensure PYTHONPATH=./backend")
+    except ImportError as e:
+        logger.error(f"Import Error: {e}. Ensure PYTHONPATH=./backend")
         return
 
-    logger.info("🚀 Starting Quality Benchmark on GitHub Codespaces...")
+    logger.info("🚀 Starting Quality Benchmark (Documentation Validated)...")
 
     test_api_connectivity()
-    is_ready = check_env()
+    check_env()
 
     # 1. Check OpenRouter Free Status
-    free_models = openrouter_guard.fetch_free_models()
-    logger.info(f"OpenRouter Free Inventory: {len(free_models)} models found.")
+    try:
+        free_models = openrouter_guard.fetch_free_models()
+        logger.info(f"OpenRouter Free Inventory: {len(free_models)} models found.")
+    except Exception as e:
+        logger.error(f"Failed to fetch OpenRouter inventory: {e}")
+        free_models = []
 
     samples = [
         {"text": "Artificial Intelligence is transforming video localization.", "lang": "German"},
@@ -60,29 +67,28 @@ def run_benchmark():
         # Test 1: Groq (Llama 3.3 70b)
         try:
             res = unified_llm.route_request(
-                f"Translate to {sample['lang']}. Return JSON {{'translated_text': '...'}}",
+                f"You are a translator. Translate to {sample['lang']}. Return ONLY valid JSON: {{'translated_text': '...'}}",
                 sample['text'],
                 tier="high_precision"
             )
             logger.success(f"Groq [70b]: {res.get('translated_text')}")
         except Exception as e:
-            logger.error(f"Groq Error: {e}")
+            logger.error(f"Groq API Error: {e}")
 
         # Test 2: Gemini (OpenRouter Free)
         try:
             res = unified_llm.call_openrouter_free(
-                f"Translate to {sample['lang']}. Return JSON {{'translated_text': '...'}}",
+                f"You are a translator. Translate to {sample['lang']}. Return ONLY valid JSON: {{'translated_text': '...'}}",
                 sample['text'],
                 model="google/gemini-flash-1.5:free"
             )
             logger.success(f"Gemini [Free]: {res.get('translated_text')}")
         except Exception as e:
-            logger.error(f"Gemini Error: {e}")
+            logger.error(f"OpenRouter API Error: {e}")
 
     logger.info("Benchmark complete.")
 
 if __name__ == "__main__":
-    # Instruction for execution
     if len(sys.argv) > 1 and sys.argv[1] == "--diagnostic":
         test_api_connectivity()
     else:
