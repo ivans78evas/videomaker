@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 from groq import Groq
 from app.core.config import settings
 from app.services.quota import quota_service
+from app.services.openrouter_guard import openrouter_guard
 
 class UnifiedLLMService:
     """
@@ -42,15 +43,55 @@ class UnifiedLLMService:
 
         return json.loads(completion.choices[0].message.content)
 
+    def call_openrouter_free(self, system: str, user: str, model: str = "meta-llama/llama-3-8b-instruct:free") -> Dict[str, Any]:
+        if self.openrouter_key == "stub":
+            return {"score": 8, "feedback": "OpenRouter Stub"}
+
+        # Security: Force check that model is still free
+        if not openrouter_guard.ensure_model_is_free(model):
+            # Fallback: Get current top free model
+            available_free = openrouter_guard.fetch_free_models()
+            if not available_free:
+                return {"error": "CRITICAL: No free models available on OpenRouter."}
+            model = available_free[0]
+
+        # Direct HTTP call for OpenRouter to keep it lightweight
+        try:
+            with httpx.Client() as client:
+                response = client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.openrouter_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": system},
+                            {"role": "user", "content": user}
+                        ]
+                    },
+                    timeout=30.0
+                )
+                data = response.json()
+                content = data["choices"][0]["message"]["content"]
+                try:
+                    return json.loads(content)
+                except json.JSONDecodeError:
+                    import re
+                    match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if match: return json.loads(match.group())
+                    return {"translated_text": content} # Return raw if not JSON
+        except Exception as e:
+            return {"error": str(e)}
+
     def route_request(self, system: str, user: str, tier: str = "cost_optimized") -> Dict[str, Any]:
         if tier == "high_precision":
-            # Tier 1: Lead Linguist
             return self.call_groq(system, user, model="llama-3.3-70b-versatile")
         elif tier == "standard":
-            # Tier 2: Technical Editor
             return self.call_groq(system, user, model="meta-llama/llama-4-scout-17b-16e-instruct")
         else:
-            # Tier 3: Rapid Validator
-            return self.call_groq(system, user, model="llama-3.1-8b-instant")
+            # Use OpenRouter for cost-optimized
+            return self.call_openrouter_free(system, user)
 
 unified_llm = UnifiedLLMService()
