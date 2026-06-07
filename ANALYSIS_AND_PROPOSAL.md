@@ -76,6 +76,54 @@ Scale without upfront costs through **Localization Partnerships**.
 
 ---
 
+## 23. Model Inventory & Quota Strategy (Firm Optimization)
+
+To maintain a "Zero-Cost" operation while ensuring high-fidelity output, the firm uses a tiered model selection based on the specific strengths and hard limits of available APIs.
+
+### 23.1 Model Benchmarking & Role Assignment
+
+| Model | Role in Firm | Strength | Weakness | Limits (RPM/RPD/TPD) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Llama 3.3 70b** | **Lead Linguist** | Deep reasoning, high translation accuracy. | Small token daily limit (100K). | 30 / 1K / 100K |
+| **Llama 4 Scout 17b** | **Technical Editor** | New-gen efficiency, good context window. | Less mature for complex slang. | 30 / 1K / 500K |
+| **Llama 3.1 8b** | **Rapid Validator** | Insane speed, massive daily quota. | Lower reasoning depth. | 30 / 14.4K / 500K |
+| **Qwen 3 32b** | **Global Aggregator** | Excellent multilingual support. | 1K daily request ceiling. | 60 / 1K / 500K |
+| **GPT-OSS 120b** | **Consensus Judge** | Massive reasoning power. | Low TPD (200K). | 30 / 1K / 200K |
+| **Prompt Guard** | **Safety Officer** | Dedicated security/jailbreak detection. | Not for general tasks. | 30 / 14.4K / 500K |
+
+### 23.2 Multimodal Quota Management
+
+- **STT (Whisper Large V3 Turbo):**
+    - **Limit:** 7.2K audio seconds per hour / 28.8K per day.
+    - **Strategy:** Priority given to short-form content. Long videos are queued for "Off-Peak" hours to avoid locking out the STT engine.
+- **TTS (Orpheus):**
+    - **Limit:** Very tight (100 requests/day).
+    - **Strategy:** Reserved for "Ultra-Premium" branding. Default operations use `edge-tts`.
+
+### 23.3 Hybrid Routing Logic
+The firm automatically shifts loads based on remaining token quotas:
+1. **High Precision:** Uses **Llama 3.3 70b** until TPD < 10%.
+2. **Standard:** Fails over to **Qwen 3 32b** or **Llama 4 Scout**.
+3. **Bulk Cleanup:** Managed by **Llama 3.1 8b** to preserve high-tier tokens.
+
+---
+
+## 24. Model Quota Enforcement & Tiered Intelligence
+
+To ensure 24/7 reliability on free-tier APIs, TranslationTurbo uses a Redis-backed **Quota Enforcement Layer**.
+
+### 24.1 Tiered Routing (The "Smart Firm")
+The system automatically routes tasks based on remaining daily quotas:
+1. **Tier 1 (High Precision):** **Llama 3.3 70b** is used for the Linguist Agent until 90% of the 100k TPD limit is reached.
+2. **Tier 2 (Standard):** **Llama 4 Scout 17b** takes over for general translation if Tier 1 is depleted.
+3. **Tier 3 (Free/Fast):** **Llama 3.1 8b** handles technical verification and rapid validation with a massive 14.4k RPD ceiling.
+
+### 24.2 STT Bottleneck Management
+Whisper Large V3 Turbo is limited to 28.8k audio seconds per day.
+- **Backpressure:** If daily STT limit is approached, the system deprioritizes long-form archival content and focuses on High-ROI short-form videos.
+
+---
+
 ## 22. Omni-Voice & Zero-Shot Cloning
 
 To maintain high brand consistency and personality, TranslationTurbo uses **Zero-Shot Voice Cloning** (Omni-Voice) instead of fixed pre-trained models.
